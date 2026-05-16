@@ -1,0 +1,22 @@
+# Environment variables (keep your API key secret!)
+.env
+
+# Database file
+*.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploaded images (user data, no need to track)
+static/uploads/

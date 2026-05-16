@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}AgriSmart — AI Crop Disease Detection Platform{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div>
+    <div class="hero-badge">🤖 Powered by Google Gemini AI</div>
+    <h1>Detect Crop Diseases<br><span class="grad">Instantly with AI</span></h1>
+    <p>Upload a photo of your crop and get instant disease diagnosis, treatment plans, growth tips, and expert agricultural advice — completely free.</p>
+    <div class="hero-btns">
+      <a href="/detect" class="btn btn-primary">🔍 Analyze My Crop</a>
+      <a href="/chatbot" class="btn btn-secondary">🤖 Ask AgriBot</a>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-num">38+</div><div class="stat-label">Disease Types Detected</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Analysis Modes</div></div>
+      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Free Forever</div></div>
+      <div class="stat"><div class="stat-num">AI</div><div class="stat-label">Powered by Gemini</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:3rem">
+      <span class="section-label">What We Offer</span>
+      <h2 class="section-title">Everything Your Crop Needs</h2>
+      <p class="section-sub">From disease detection to growth optimization — one platform for all your agricultural needs.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="feature-icon">🔬</div>
+        <div class="feature-title">Disease Detection</div>
+        <div class="feature-desc">Upload any crop photo and instantly identify diseases with severity levels, root causes, and treatment recommendations.</div>
+      </div>
+      <div class="card">
+        <div class="feature-icon">🌿</div>
+        <div class="feature-title">Crop Identification</div>
+        <div class="feature-desc">Don't know what plant you're looking at? Our AI identifies crops and plants from photos with detailed information.</div>
+      </div>
+      <div class="card">
+        <div class="feature-icon">📈</div>
+        <div class="feature-title">Growth Optimization</div>
+        <div class="feature-desc">Get personalized tips to grow your crops faster — soil type, watering schedule, sunlight requirements and more.</div>
+      </div>
+      <div class="card">
+        <div class="feature-icon">💊</div>
+        <div class="feature-title">Treatment Plans</div>
+        <div class="feature-desc">Step-by-step treatment guides with both chemical and organic options. Know exactly what to do and when.</div>
+      </div>
+      <div class="card">
+        <div class="feature-icon">🧪</div>
+        <div class="feature-title">Fertilizer Guide</div>
+        <div class="feature-desc">Get NPK recommendations and fertilizer schedules tailored specifically for your crop and growth stage.</div>
+      </div>
+      <div class="card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">AI Chatbot</div>
+        <div class="feature-desc">Ask AgriBot anything about farming — available 24/7 to answer all your crop and plant-related questions.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="section" style="background: rgba(0,212,170,0.02); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4rem; align-items:center">
+      <div>
+        <span class="section-label">How It Works</span>
+        <h2 class="section-title">3 Simple Steps</h2>
+        <p class="section-sub" style="margin-bottom:2rem">Get actionable crop insights in under 10 seconds.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div><div class="step-title">Upload Your Crop Photo</div><div class="step-desc">Take a clear photo of your crop leaf, stem, or fruit and upload it.</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div><div class="step-title">Choose Analysis Type</div><div class="step-desc">Select from disease detection, identification, growth tips, treatment, or fertilizer guide.</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div><div class="step-title">Get AI-Powered Results</div><div class="step-desc">Receive a detailed, structured report with actionable steps in seconds.</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="background:var(--glass); border:1px solid var(--border); border-radius:24px; padding:2rem; font-size:8rem; line-height:1;">🌾</div>
+        <div style="margin-top:1.5rem; display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap">
+          <span class="badge badge-green">✓ Tomato Blight Detected</span>
+          <span class="badge badge-blue">95% Confidence</span>
+          <span class="badge badge-yellow">Moderate Severity</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Crop Types -->
+<section class="section">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:3rem">
+      <span class="section-label">Supported Crops</span>
+      <h2 class="section-title">Works With Any Crop</h2>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center">
+      {% for crop in [('🍅','Tomato'),('🥔','Potato'),('🌽','Corn'),('🍎','Apple'),('🍇','Grape'),('🌶️','Pepper'),('🥦','Broccoli'),('🌾','Wheat'),('🌻','Sunflower'),('🫛','Peas'),('🧅','Onion'),('🥕','Carrot')] %}
+      <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:12px; padding:1rem 1.5rem; text-align:center; font-size:0.9rem; transition:all 0.2s; cursor:default;"
+           onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+        <div style="font-size:2rem; margin-bottom:4px">{{ crop[0] }}</div>
+        {{ crop[1] }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box">
+    <div style="font-size:3rem; margin-bottom:1rem">🚀</div>
+    <h2 class="section-title" style="margin-bottom:1rem">Ready to Protect Your Crops?</h2>
+    <p style="color:var(--text-secondary); margin-bottom:2rem;">Start for free — no signup, no credit card. Just upload and analyze.</p>
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap">
+      <a href="/detect" class="btn btn-primary">🔍 Detect Disease Now</a>
+      <a href="/chatbot" class="btn btn-secondary">💬 Chat with AgriBot</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Scan History — AgriSmart{% endblock %}
+{% block desc %}View your past crop analysis scans and results.{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px; margin:0 auto; padding:3rem 2rem">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:1rem">
+    <div>
+      <span class="section-label">Your Records</span>
+      <h1 class="section-title" style="margin-bottom:0">Scan History</h1>
+    </div>
+    <a href="/detect" class="btn btn-primary" style="font-size:0.9rem; padding:10px 20px">+ New Analysis</a>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingState" style="text-align:center; padding:4rem; color:var(--text-muted)">
+    <div class="spinner" style="margin:0 auto 1rem"></div>
+    Loading your scan history...
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="empty-icon">📂</div>
+    <h3 style="margin-bottom:0.5rem; color:var(--text-secondary)">No scans yet</h3>
+    <p style="margin-bottom:1.5rem; font-size:0.9rem">Your crop analysis history will appear here.</p>
+    <a href="/detect" class="btn btn-primary">🔍 Analyze Your First Crop</a>
+  </div>
+
+  <!-- History Grid -->
+  <div class="grid-2" id="historyGrid" style="display:none"></div>
+
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalMeta" style="margin-bottom:1rem; display:flex; gap:8px; flex-wrap:wrap"></div>
+    <h2 id="modalTitle" style="margin-bottom:0.25rem; font-size:1.2rem"></h2>
+    <p id="modalDate" style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem"></p>
+    <div class="result-content" id="modalContent" style="max-height:60vh; overflow-y:auto"></div>
+    <button onclick="copyModalResult()" style="margin-top:1.5rem; background:var(--glass); border:1px solid var(--glass-border); color:var(--text-secondary); padding:8px 18px; border-radius:8px; cursor:pointer; font-size:0.85rem;" id="copyModalBtn">📋 Copy Result</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allHistory = [];
+
+const severityBadge = {
+  'None': 'badge-green', 'Mild': 'badge-blue',
+  'Moderate': 'badge-yellow', 'Severe': 'badge-red', 'Critical': 'badge-red'
+};
+
+async function loadHistory() {
+  try {
+    const res = await fetch('/api/history?limit=50');
+    const data = await res.json();
+    document.getElementById('loadingState').style.display = 'none';
+
+    if (!data.history || data.history.length === 0) {
+      document.getElementById('emptyState').style.display = 'block';
+      return;
+    }
+
+    allHistory = data.history;
+    renderCards(allHistory);
+    document.getElementById('historyGrid').style.display = 'grid';
+  } catch {
+    document.getElementById('loadingState').innerHTML = '<p style="color:#fca5a5">⚠️ Failed to load history. Please refresh.</p>';
+  }
+}
+
+function renderCards(items) {
+  const grid = document.getElementById('historyGrid');
+  grid.innerHTML = items.map(s => {
+    const sev = s.severity || '';
+    const sevClass = severityBadge[sev] || 'badge-blue';
+    const summary = s.result_summary ? s.result_summary.substring(0, 150) + '...' : 'No summary available.';
+    return `
+    <div class="history-card" onclick="openModal(${s.id})">
+      <div class="history-meta">
+        <span class="badge badge-green">${s.analysis_type || 'Analysis'}</span>
+        ${sev ? `<span class="badge ${sevClass}">${sev}</span>` : ''}
+        ${s.disease_name && s.disease_name !== 'Unknown' ? `<span class="badge badge-red">🦠 ${s.disease_name.substring(0,30)}</span>` : ''}
+      </div>
+      <div class="history-crop">🌿 ${s.crop_name || 'Unknown Crop'}</div>
+      <div class="history-summary">${summary}</div>
+      <div class="history-date">📅 ${s.created_at}</div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(id) {
+  const s = allHistory.find(x => x.id === id);
+  if (!s) return;
+  const sev = s.severity || '';
+  const sevClass = severityBadge[sev] || 'badge-blue';
+  document.getElementById('modalMeta').innerHTML = `
+    <span class="badge badge-green">${s.analysis_type}</span>
+    ${sev ? `<span class="badge ${sevClass}">${sev}</span>` : ''}`;
+  document.getElementById('modalTitle').textContent = '🌿 ' + (s.crop_name || 'Unknown Crop');
+  document.getElementById('modalDate').textContent = '📅 ' + s.created_at;
+  document.getElementById('modalContent').textContent = s.full_result || 'No detailed result saved.';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+}
+
+function copyModalResult() {
+  const text = document.getElementById('modalContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyModalBtn');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy Result', 2000);
+  });
+}
+
+loadHistory();
+</script>
+{% endblock %}

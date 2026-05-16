@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}AgriBot — AI Crop Assistant | AgriSmart{% endblock %}
+{% block desc %}Chat with AgriBot, your 24/7 AI agricultural assistant. Ask anything about crops, diseases, fertilizers, and farming.{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+
+  <!-- Sidebar -->
+  <div class="chat-sidebar">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border)">
+      <div style="width:40px; height:40px; border-radius:12px; background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:1.2rem">🌱</div>
+      <div>
+        <div style="font-weight:600; font-size:0.9rem">AgriBot</div>
+        <div style="font-size:0.75rem; color:var(--accent)">● Online</div>
+      </div>
+    </div>
+
+    <div class="chat-sidebar-title">Quick Questions</div>
+
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🍅 Why are my tomato leaves turning yellow?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">💧 How often should I water my crops?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🧪 Best fertilizer for wheat?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🐛 How to control pests organically?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🌱 How to improve soil health?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">📅 When to plant rice in India?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🌾 Tips to increase crop yield?</button>
+
+    <div style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border)">
+      <button onclick="clearChat()" style="width:100%; background:none; border:1px solid var(--glass-border); color:var(--text-muted); padding:8px; border-radius:8px; cursor:pointer; font-size:0.8rem; transition:all 0.2s"
+        onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--glass-border)'; this.style.color='var(--text-muted)'">🗑️ Clear Chat</button>
+    </div>
+  </div>
+
+  <!-- Chat Main -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="bot-avatar">🤖</div>
+      <div>
+        <div style="font-weight:600; font-size:0.95rem">AgriBot</div>
+        <div class="bot-status">Online — Ready to help</div>
+      </div>
+      <div style="margin-left:auto; font-size:0.8rem; color:var(--text-muted)">Powered by Gemini AI 🌟</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="message bot">
+        <div class="msg-avatar">🤖</div>
+        <div>
+          <div class="msg-bubble">
+            👋 Hello! I'm <strong>AgriBot</strong>, your AI agricultural assistant!<br><br>
+            I can help you with:<br>
+            🔬 Crop disease diagnosis<br>
+            🌱 Growing tips & techniques<br>
+            🧪 Fertilizer recommendations<br>
+            💧 Irrigation & soil advice<br>
+            🐛 Pest control methods<br><br>
+            What can I help you with today?
+          </div>
+          <div class="msg-time">Just now</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="Ask anything about your crops..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; text-align:center">Press Enter to send • Shift+Enter for new line</div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let chatHistory = [];
+
+function getTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function scrollToBottom() {
+  const msgs = document.getElementById('messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addMessage(role, content) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  const avatar = role === 'bot' ? '🤖' : '👤';
+  div.innerHTML = `
+    <div class="msg-avatar">${avatar}</div>
+    <div>
+      <div class="msg-bubble">${content.replace(/\n/g, '<br>')}</div>
+      <div class="msg-time">${getTime()}</div>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message bot'; div.id = 'typingIndicator';
+  div.innerHTML = `<div class="msg-avatar">🤖</div><div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', message);
+  chatHistory.push({ role: 'user', content: message });
+  showTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history: chatHistory.slice(-10) })
+    });
+    const data = await res.json();
+    removeTyping();
+    const reply = data.success ? data.response : '⚠️ Sorry, I had trouble responding. Please try again.';
+    addMessage('bot', reply);
+    chatHistory.push({ role: 'model', content: reply });
+  } catch {
+    removeTyping();
+    addMessage('bot', '⚠️ Connection error. Please check your internet and try again.');
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function sendSuggestion(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+function clearChat() {
+  chatHistory = [];
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = '';
+  addMessage('bot', '🔄 Chat cleared! How can I help you with your crops today?');
+}
+</script>
+{% endblock %}

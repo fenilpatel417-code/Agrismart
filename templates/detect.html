@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Detect Crop Disease — AgriSmart{% endblock %}
+{% block desc %}Upload a crop photo and get instant AI-powered disease detection, treatment plans, and growth advice.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <span class="section-label">AI Analysis</span>
+  <h1 class="section-title">Analyze Your Crop</h1>
+  <p style="color:var(--text-secondary); max-width:500px; margin:0.5rem auto 0; font-size:0.95rem;">Choose an analysis type, upload your crop photo, and get instant expert results.</p>
+</div>
+
+<div class="upload-section">
+
+  <!-- Analysis Type Selector -->
+  <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem; font-weight:600; letter-spacing:1px; text-transform:uppercase;">Step 1 — Choose Analysis Type</p>
+  <div class="analysis-grid" id="analysisGrid">
+    <button class="analysis-btn selected" data-type="disease" onclick="selectAnalysis(this)">
+      <span class="icon">🔬</span> Disease Detection
+    </button>
+    <button class="analysis-btn" data-type="identify" onclick="selectAnalysis(this)">
+      <span class="icon">🌿</span> Crop Identify
+    </button>
+    <button class="analysis-btn" data-type="growth" onclick="selectAnalysis(this)">
+      <span class="icon">📈</span> Growth Tips
+    </button>
+    <button class="analysis-btn" data-type="treatment" onclick="selectAnalysis(this)">
+      <span class="icon">💊</span> Treatment Plan
+    </button>
+    <button class="analysis-btn" data-type="fertilizer" onclick="selectAnalysis(this)">
+      <span class="icon">🧪</span> Fertilizer Guide
+    </button>
+  </div>
+
+  <!-- Upload Zone -->
+  <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem; font-weight:600; letter-spacing:1px; text-transform:uppercase;">Step 2 — Upload Crop Photo</p>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this.files[0])" />
+    <div id="dropContent">
+      <div class="drop-icon">📸</div>
+      <div class="drop-title">Drag & drop your crop photo here</div>
+      <div class="drop-sub">or click to browse &nbsp;•&nbsp; JPG, PNG, WebP &nbsp;•&nbsp; Max 10MB</div>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-container" id="previewContainer" style="display:none; margin-top:1rem">
+    <img id="previewImg" class="preview-img" alt="Crop preview" />
+    <button class="change-btn" onclick="resetUpload()">✕ Change</button>
+  </div>
+
+  <!-- Analyze Button -->
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()" disabled>
+    <span id="analyzeBtnText">🔍 Analyze Crop</span>
+  </button>
+
+  <!-- Loading -->
+  <div class="loading" id="loadingBox">
+    <div class="spinner"></div>
+    <div class="loading-text">🤖 AgriSmart AI is analyzing your crop...<br><small style="color:var(--text-muted)">This may take 5–10 seconds</small></div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-box" id="resultBox">
+    <div class="result-header">
+      <div>
+        <span class="result-badge" id="resultBadge">✅ Analysis Complete</span>
+        <h3 style="margin-top:0.5rem; font-size:1.1rem" id="resultTitle">Results</h3>
+      </div>
+      <button onclick="copyResult()" style="background:var(--glass); border:1px solid var(--glass-border); color:var(--text-secondary); padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem;" id="copyBtn">📋 Copy</button>
+    </div>
+    <div class="result-content" id="resultContent"></div>
+    <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--glass-border); display:flex; gap:0.75rem; flex-wrap:wrap;">
+      <button onclick="resetUpload()" class="btn btn-secondary" style="font-size:0.85rem; padding:8px 18px;">🔄 Analyze Another</button>
+      <a href="/history" class="btn btn-secondary" style="font-size:0.85rem; padding:8px 18px;">📋 View History</a>
+      <a href="/chatbot" class="btn btn-secondary" style="font-size:0.85rem; padding:8px 18px;">💬 Ask AgriBot</a>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox" style="display:none">
+    <strong>⚠️ Error</strong>
+    <p id="errorMsg" style="margin-top:0.5rem; font-size:0.9rem"></p>
+  </div>
+
+</div>
+
+<!-- Result Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle" style="margin-bottom:1rem"></h2>
+    <div class="result-content" id="modalContent"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedType = 'disease';
+let selectedFile = null;
+
+function selectAnalysis(btn) {
+  document.querySelectorAll('.analysis-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedType = btn.dataset.type;
+}
+
+function handleFile(file) {
+  if (!file) return;
+  if (!file.type.match('image.*')) {
+    showError('Please upload an image file (JPG, PNG, WebP).'); return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showError('Image too large. Please upload under 10MB.'); return;
+  }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('dropZone').style.display = 'none';
+    document.getElementById('previewContainer').style.display = 'block';
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('resultBox').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Drag & Drop
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+function resetUpload() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('dropZone').style.display = 'flex';
+  document.getElementById('previewContainer').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('resultBox').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'none';
+}
+
+async function analyzeImage() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  document.getElementById('analyzeBtnText').textContent = '⏳ Analyzing...';
+  document.getElementById('loadingBox').style.display = 'block';
+  document.getElementById('resultBox').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('analysis_type', selectedType);
+
+    const res = await fetch('/api/detect', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    document.getElementById('loadingBox').style.display = 'none';
+
+    if (data.success) {
+      const labels = { disease:'🔬 Disease Detection', identify:'🌿 Crop Identification', growth:'📈 Growth Tips', treatment:'💊 Treatment Plan', fertilizer:'🧪 Fertilizer Guide' };
+      document.getElementById('resultBadge').textContent = '✅ ' + (labels[selectedType] || 'Analysis Complete');
+      document.getElementById('resultTitle').textContent = data.crop_name ? `Crop: ${data.crop_name}` : 'Analysis Results';
+      document.getElementById('resultContent').textContent = data.result;
+      document.getElementById('resultBox').style.display = 'block';
+      document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showError(data.error || 'Analysis failed. Please try again.');
+    }
+  } catch (err) {
+    document.getElementById('loadingBox').style.display = 'none';
+    showError('Connection error. Please check your internet and try again.');
+  }
+
+  btn.disabled = false;
+  document.getElementById('analyzeBtnText').textContent = '🔍 Analyze Crop';
+}
+
+function showError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorBox').style.display = 'block';
+  document.getElementById('errorBox').scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyResult() {
+  const text = document.getElementById('resultContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+}
+</script>
+{% endblock %}
