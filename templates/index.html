@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriSmart - Crop Disease Detector</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="logo">🌿 AgriSmart</div>
+    <div class="nav-links">
+      <a href="/" class="active">🔍 Disease Detector</a>
+      <a href="/chat">🤖 AI Chatbot</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Crop Disease Detector</h1>
+    <p>Upload a photo of a plant leaf to instantly detect disease and get treatment advice</p>
+  </div>
+
+  <main>
+    <div class="card">
+      <h2>Upload Leaf Image</h2>
+      <div class="upload-box" id="uploadBox">
+        <input type="file" id="fileInput" accept="image/*" hidden>
+        <img id="preview" src="" alt="preview" style="display:none; max-width:100%; max-height:280px; border-radius:8px;">
+        <div id="placeholder">
+          <div class="upload-icon">📷</div>
+          <p><strong>Click to upload</strong> or drag and drop</p>
+          <p class="hint">Supports JPG, PNG, JPEG</p>
+        </div>
+      </div>
+      <button id="analyzeBtn" onclick="analyze()" disabled>🔍 Analyze Leaf</button>
+    </div>
+
+    <div id="result" class="card result-card" style="display:none">
+      <div id="healthyBadge" class="badge" style="display:none">✅ Healthy Plant</div>
+      <div id="diseaseBadge" class="badge disease" style="display:none">⚠️ Disease Detected</div>
+      <h2 id="diseaseName"></h2>
+      <div class="confidence-section">
+        <span>Confidence</span>
+        <span id="confidenceText" class="conf-value"></span>
+      </div>
+      <div class="confidence-bar">
+        <div id="confidenceFill" class="confidence-fill"></div>
+      </div>
+      <div class="remedy-box">
+        <h3>💊 Recommended Treatment</h3>
+        <p id="remedyText"></p>
+      </div>
+      <div class="action-buttons">
+        <button class="secondary-btn" onclick="resetForm()">🔄 Analyze Another</button>
+        <button onclick="window.location.href='/chat'">🤖 Ask AgriBot</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const uploadBox = document.getElementById("uploadBox");
+    const fileInput = document.getElementById("fileInput");
+    const preview   = document.getElementById("preview");
+    const placeholder = document.getElementById("placeholder");
+    const analyzeBtn  = document.getElementById("analyzeBtn");
+
+    uploadBox.onclick = () => fileInput.click();
+
+    uploadBox.ondragover = (e) => {
+      e.preventDefault();
+      uploadBox.classList.add("drag");
+    };
+    uploadBox.ondragleave = () => uploadBox.classList.remove("drag");
+    uploadBox.ondrop = (e) => {
+      e.preventDefault();
+      uploadBox.classList.remove("drag");
+      handleFile(e.dataTransfer.files[0]);
+    };
+
+    fileInput.onchange = () => handleFile(fileInput.files[0]);
+
+    function handleFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = "block";
+        placeholder.style.display = "none";
+        analyzeBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function analyze() {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      analyzeBtn.textContent = "⏳ Analyzing...";
+      analyzeBtn.disabled = true;
+      document.getElementById("result").style.display = "none";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res  = await fetch("/predict", { method: "POST", body: formData });
+        const data = await res.json();
+
+        document.getElementById("diseaseName").textContent = data.disease;
+        document.getElementById("confidenceText").textContent = data.confidence + "%";
+        document.getElementById("confidenceFill").style.width = data.confidence + "%";
+        document.getElementById("remedyText").textContent = data.remedy;
+
+        if (data.is_healthy) {
+          document.getElementById("healthyBadge").style.display = "inline-block";
+          document.getElementById("diseaseBadge").style.display  = "none";
+          document.getElementById("confidenceFill").style.background = "#4caf50";
+        } else {
+          document.getElementById("healthyBadge").style.display = "none";
+          document.getElementById("diseaseBadge").style.display  = "inline-block";
+          document.getElementById("confidenceFill").style.background = "#f44336";
+        }
+
+        document.getElementById("result").style.display = "block";
+        document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+
+      } catch (err) {
+        alert("Error analyzing image. Please try again.");
+      }
+
+      analyzeBtn.textContent = "🔍 Analyze Leaf";
+      analyzeBtn.disabled = false;
+    }
+
+    function resetForm() {
+      preview.style.display    = "none";
+      placeholder.style.display = "block";
+      document.getElementById("result").style.display = "none";
+      analyzeBtn.disabled = true;
+      fileInput.value = "";
+    }
+  </script>
+</body>
+</html>
