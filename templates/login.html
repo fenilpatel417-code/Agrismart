@@ -30,19 +30,17 @@
     <!-- Login Form -->
     <form method="POST" action="/login" class="auth-form" id="loginForm">
       <div class="form-group">
-        <label for="phone" data-i18n="login_phone">Mobile Number</label>
+        <label for="phone" data-i18n="login_email_or_phone">Email or Mobile Number</label>
         <div class="input-wrapper">
-          <span class="input-icon">📞</span>
+          <span class="input-icon">👤</span>
           <input
-            type="tel"
+            type="text"
             id="phone"
             name="phone"
-            placeholder="Enter 10-digit mobile number"
-            data-i18n="login_phone_placeholder"
+            placeholder="Email or Mobile Number"
+            data-i18n="login_email_or_phone_placeholder"
             required
-            pattern="[0-9]{10}"
-            maxlength="10"
-            autocomplete="tel"
+            autocomplete="username"
           />
         </div>
       </div>
