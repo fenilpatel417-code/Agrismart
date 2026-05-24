@@ -108,6 +108,8 @@ const translations = {
     verify_reg_button: "Verify & Create Account",
     verify_reg_expire: "OTP expires in 5 minutes.",
     verify_reg_back: "← Back to Registration",
+    otp_expires_in: "OTP expires in",
+    error_otp_expired: "OTP has expired. Please request a new code below.",
 
     // Common
     loading: "Loading...",
@@ -330,6 +332,8 @@ const translations = {
     verify_reg_button: "ચકાસો અને એકાઉન્ટ બનાવો",
     verify_reg_expire: "OTP ૫ મિનિટમાં સમાપ્ત થાય છે.",
     verify_reg_back: "← નોંધણી પર પાછા જાઓ",
+    otp_expires_in: "OTP સમાપ્ત થવામાં સમય બાકી છે",
+    error_otp_expired: "OTP ની સમય મર્યાદા પૂરી થઈ ગઈ છે. નવો કોડ મંગાવો.",
 
     // Common
     loading: "લોડ થઈ રહ્યું છે...",

@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
 from database.db import engine, Base
 from routers import detection, chatbot, history, auth, market
@@ -31,6 +32,11 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SECRET_KEY", "agrismart-jwt-secret-change-this-in-production-2026")
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
