@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import Request, Depends
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy.orm import Session
 
 from database.db import get_db
