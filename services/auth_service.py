@@ -34,16 +34,18 @@ COOKIE_NAME = "access_token"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-# ─── Password Helpers ────────────────────────────────────────────────────────
+import bcrypt
+
 def hash_password(password: str) -> str:
-    # Truncate to 72 bytes to fix bcrypt limit
-    password = password[:72]
-    return pwd_context.hash(password)
+    password_bytes = password[:72].encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 def verify_password(plain: str, hashed: str) -> bool:
-    # Truncate here too for consistency
-    plain = plain[:72]
-    return pwd_context.verify(plain, hashed)
+    plain_bytes = plain[:72].encode('utf-8')
+    hashed_bytes = hashed.encode('utf-8')
+    return bcrypt.checkpw(plain_bytes, hashed_bytes)
 
 
 # ─── JWT Helpers ─────────────────────────────────────────────────────────────
