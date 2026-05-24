@@ -11,7 +11,7 @@ app.secret_key = "agrismart_secret_key"
 
 # =============================================
 # PASTE YOUR GEMINI API KEY HERE
-GEMINI_API_KEY = "AIzaSyD19vdTxsMGxwSNFbTM8NWrrAErFip3RpI"
+GEMINI_API_KEY = " "
 # =============================================
 
 genai.configure(api_key=GEMINI_API_KEY)
