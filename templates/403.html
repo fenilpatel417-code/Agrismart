@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}403 Forbidden — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card" style="text-align:center; max-width:500px;">
+    <div style="font-size:4rem; margin-bottom:1rem;">🚫</div>
+    <h1 class="auth-title" style="font-size:2rem;">Access Denied</h1>
+    <p class="auth-sub">You need admin privileges to access this page.</p>
+    <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+      <a href="/dashboard" class="btn btn-primary">🏠 Go to Dashboard</a>
+      <a href="/" class="btn btn-secondary">← Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

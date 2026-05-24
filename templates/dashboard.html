@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+
+  <!-- Dashboard Header -->
+  <div class="dash-header">
+    <div class="dash-welcome">
+      <div class="dash-avatar">{{ current_user.name[0].upper() }}</div>
+      <div>
+        <h1 class="dash-name">Hello, {{ current_user.name }}! 👋</h1>
+        <p class="dash-email">{{ current_user.phone }}</p>
+        <span class="role-badge role-{{ current_user.role }}">
+          {% if current_user.role == 'admin' %}⚡ Admin{% else %}🌱 Farmer{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="dash-stats-row">
+      <div class="dash-stat-card">
+        <div class="dash-stat-num">{{ scans | length }}</div>
+        <div class="dash-stat-label">Total Scans</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-num">
+          {{ scans | selectattr('severity', 'equalto', 'None') | list | length +
+             scans | selectattr('disease_name', 'equalto', 'Healthy') | list | length }}
+        </div>
+        <div class="dash-stat-label">Healthy Results</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-num">
+          {{ scans | selectattr('severity', 'ne', 'None') | list | length }}
+        </div>
+        <div class="dash-stat-label">Issues Found</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="dash-actions">
+    <a href="/detect" class="dash-action-btn">🔬 New Analysis</a>
+    <a href="/chatbot" class="dash-action-btn secondary">🤖 Ask AgriBot</a>
+    {% if current_user.role == 'admin' %}
+    <a href="/admin" class="dash-action-btn admin">⚡ Admin Panel</a>
+    {% endif %}
+  </div>
+
+  <!-- Scan History Table -->
+  <div class="dash-section">
+    <div class="dash-section-header">
+      <h2>📋 My Scan History</h2>
+      <span class="dash-count">{{ scans | length }} record{% if scans | length != 1 %}s{% endif %}</span>
+    </div>
+
+    {% if scans %}
+    <div class="dash-table-wrapper">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Crop Name</th>
+            <th>Analysis Type</th>
+            <th>Disease / Status</th>
+            <th>Severity</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in scans %}
+          <tr>
+            <td class="td-num">{{ loop.index }}</td>
+            <td class="td-crop">
+              <span class="crop-icon">🌿</span>
+              {{ scan.crop_name or 'Unknown' }}
+            </td>
+            <td>
+              <span class="badge badge-blue">{{ scan.analysis_type or '—' }}</span>
+            </td>
+            <td>
+              <span class="td-disease">{{ scan.disease_name or '—' }}</span>
+            </td>
+            <td>
+              {% set sev = scan.severity or 'Unknown' %}
+              {% if sev in ['None', 'Healthy'] %}
+                <span class="badge badge-green">{{ sev }}</span>
+              {% elif sev in ['Mild', 'Moderate'] %}
+                <span class="badge badge-yellow">{{ sev }}</span>
+              {% elif sev in ['Severe', 'Critical'] %}
+                <span class="badge badge-red">{{ sev }}</span>
+              {% else %}
+                <span class="badge badge-blue">{{ sev }}</span>
+              {% endif %}
+            </td>
+            <td class="td-date">
+              {{ scan.created_at.strftime('%d %b %Y') if scan.created_at else '—' }}
+            </td>
+            <td class="td-actions">
+              <button class="action-view-btn" onclick="viewScan({{ scan.id }}, `{{ scan.full_result | replace('`', "'") | replace('\n', '\\n') }}`)" title="View full result">
+                👁 View
+              </button>
+              <button class="action-del-btn" onclick="deleteScan({{ scan.id }}, this)" title="Delete this scan">
+                🗑
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="dash-empty">
+      <div class="empty-icon">🌾</div>
+      <h3>No scans yet</h3>
+      <p>Upload your first crop photo to get started!</p>
+      <a href="/detect" class="btn btn-primary" style="margin-top:1rem">🔍 Analyze a Crop</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Full Result Modal -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 style="margin-bottom:1.5rem; color:var(--accent)">🔬 Full Analysis Result</h3>
+    <pre class="result-content" id="modalContent" style="white-space:pre-wrap; word-break:break-word;"></pre>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // View full result in modal
+  function viewScan(id, fullResult) {
+    document.getElementById('modalContent').textContent = fullResult;
+    document.getElementById('resultModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('resultModal').classList.remove('open');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('resultModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Delete scan
+  async function deleteScan(scanId, btn) {
+    if (!confirm('Delete this scan? This cannot be undone.')) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳';
+
+    try {
+      const res = await fetch(`/api/history/${scanId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        // Remove row from table
+        btn.closest('tr').style.opacity = '0';
+        btn.closest('tr').style.transition = 'opacity 0.3s';
+        setTimeout(() => btn.closest('tr').remove(), 300);
+      } else {
+        alert(data.error || 'Failed to delete.');
+        btn.disabled = false;
+        btn.textContent = '🗑';
+      }
+    } catch (e) {
+      alert('Error deleting scan.');
+      btn.disabled = false;
+      btn.textContent = '🗑';
+    }
+  }
+</script>
+{% endblock %}

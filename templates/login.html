@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Login — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <span>🌱</span>
+      <span class="auth-logo-text">AgriSmart</span>
+    </div>
+
+    <h1 class="auth-title" data-i18n="login_title">Welcome Back</h1>
+    <p class="auth-sub">Sign in to continue protecting your crops</p>
+
+    <!-- Success message (after registration) -->
+    {% if success %}
+    <div class="auth-alert auth-alert-success">
+      ✅ {{ success }}
+    </div>
+    {% endif %}
+
+    <!-- Error message -->
+    {% if error %}
+    <div class="auth-alert auth-alert-error">
+      ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Login Form -->
+    <form method="POST" action="/login" class="auth-form" id="loginForm">
+      <div class="form-group">
+        <label for="phone" data-i18n="login_phone">Mobile Number</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📞</span>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="Enter 10-digit mobile number"
+            data-i18n="login_phone_placeholder"
+            required
+            pattern="[0-9]{10}"
+            maxlength="10"
+            autocomplete="tel"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" data-i18n="login_password">Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Your password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-pw" onclick="togglePw('password', this)">👁</button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: -10px; margin-bottom: 20px;">
+        <a href="/forgot-password" data-i18n="login_forgot_password" style="font-size: 0.85rem; color: var(--accent); text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-hover)'" onmouseout="this.style.color='var(--accent)'">Forgot Password?</a>
+      </div>
+
+      <button type="submit" class="auth-submit-btn" id="submitBtn">
+        <span data-i18n="login_button">Login</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      <a href="/register" data-i18n="login_register">Don't have an account? Register</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    input.type  = input.type === 'password' ? 'text' : 'password';
+    btn.textContent = input.type === 'password' ? '👁' : '🙈';
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<span>Signing In…</span>';
+    btn.disabled  = true;
+  });
+</script>
+{% endblock %}

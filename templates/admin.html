@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+
+  <!-- Admin Header -->
+  <div class="admin-header">
+    <div>
+      <div class="admin-badge">⚡ Administrator</div>
+      <h1 class="admin-title">Admin Control Panel</h1>
+      <p class="admin-sub">Manage users, scans, and platform activity</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="admin-stats">
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">👥</div>
+      <div class="admin-stat-num">{{ total_users }}</div>
+      <div class="admin-stat-label">Total Users</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">🔬</div>
+      <div class="admin-stat-num">{{ total_scans }}</div>
+      <div class="admin-stat-label">Total Scans</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">⚡</div>
+      <div class="admin-stat-num">
+        {{ users | selectattr('role', 'equalto', 'admin') | list | length }}
+      </div>
+      <div class="admin-stat-label">Admins</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">🌱</div>
+      <div class="admin-stat-num">
+        {{ users | selectattr('role', 'equalto', 'user') | list | length }}
+      </div>
+      <div class="admin-stat-label">Farmers</div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="showTab('users', this)">👥 Users ({{ users | length }})</button>
+    <button class="admin-tab" onclick="showTab('scans', this)">🔬 All Scans ({{ total_scans }})</button>
+  </div>
+
+  <!-- ── USERS TABLE ── -->
+  <div class="admin-panel" id="tab-users">
+    <div class="dash-section-header">
+      <h2>User Management</h2>
+      <span class="dash-count">{{ users | length }} total</span>
+    </div>
+
+    {% if users %}
+    <div class="dash-table-wrapper">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Mobile Number</th>
+            <th>Role</th>
+            <th>Joined</th>
+            <th>Scans</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr id="user-row-{{ u.id }}">
+            <td class="td-num">{{ loop.index }}</td>
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar-sm">{{ u.name[0].upper() }}</div>
+                <span>{{ u.name }}</span>
+                {% if u.id == current_user.id %}<span class="you-badge">you</span>{% endif %}
+              </div>
+            </td>
+            <td style="color:var(--text-secondary); font-size:0.88rem;">{{ u.phone }}</td>
+            <td>
+              <span class="role-badge role-{{ u.role }}" id="role-badge-{{ u.id }}">
+                {% if u.role == 'admin' %}⚡ Admin{% else %}🌱 User{% endif %}
+              </span>
+            </td>
+            <td class="td-date">{{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}</td>
+            <td class="td-num">{{ user_scan_counts.get(u.id, 0) }}</td>
+            <td class="td-actions">
+              {% if u.id != current_user.id %}
+                <button class="action-view-btn" onclick="toggleRole({{ u.id }}, this)" id="role-btn-{{ u.id }}" title="Promote/Demote">
+                  {% if u.role == 'admin' %}👤 Demote{% else %}⚡ Promote{% endif %}
+                </button>
+                <button class="action-del-btn" onclick="deleteUser({{ u.id }})" title="Delete user and all their scans">
+                  🗑
+                </button>
+              {% else %}
+                <span style="color:var(--text-muted); font-size:0.8rem;">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="dash-empty">
+      <div class="empty-icon">👥</div>
+      <p>No users found.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── SCANS TABLE ── -->
+  <div class="admin-panel" id="tab-scans" style="display:none">
+    <div class="dash-section-header">
+      <h2>All Scan Records</h2>
+      <span class="dash-count">{{ recent_scans | length }} shown</span>
+    </div>
+
+    {% if recent_scans %}
+    <div class="dash-table-wrapper">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Crop</th>
+            <th>Analysis</th>
+            <th>Disease</th>
+            <th>Severity</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in recent_scans %}
+          <tr id="scan-row-{{ scan.id }}">
+            <td class="td-num">{{ loop.index }}</td>
+            <td style="font-size:0.88rem; color:var(--text-secondary);">
+              {% if scan.user %}
+                {{ scan.user.name }}
+              {% else %}
+                <span style="color:var(--text-muted)">Anonymous</span>
+              {% endif %}
+            </td>
+            <td class="td-crop">
+              <span class="crop-icon">🌿</span>{{ scan.crop_name or '—' }}
+            </td>
+            <td><span class="badge badge-blue">{{ scan.analysis_type or '—' }}</span></td>
+            <td style="font-size:0.88rem;">{{ scan.disease_name or '—' }}</td>
+            <td>
+              {% set sev = scan.severity or 'Unknown' %}
+              {% if sev in ['None', 'Healthy'] %}<span class="badge badge-green">{{ sev }}</span>
+              {% elif sev in ['Mild', 'Moderate'] %}<span class="badge badge-yellow">{{ sev }}</span>
+              {% elif sev in ['Severe', 'Critical'] %}<span class="badge badge-red">{{ sev }}</span>
+              {% else %}<span class="badge badge-blue">{{ sev }}</span>{% endif %}
+            </td>
+            <td class="td-date">{{ scan.created_at.strftime('%d %b %Y') if scan.created_at else '—' }}</td>
+            <td class="td-actions">
+              <button class="action-view-btn" onclick="viewScan(`{{ scan.full_result | replace('`', "'") | replace('\n', '\\n') }}`)" title="View result">👁</button>
+              <button class="action-del-btn" onclick="adminDeleteScan({{ scan.id }})" title="Delete scan">🗑</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="dash-empty">
+      <div class="empty-icon">🔬</div>
+      <p>No scan records found.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Full Result Modal -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 style="margin-bottom:1.5rem; color:var(--accent)">🔬 Full Analysis Result</h3>
+    <pre class="result-content" id="modalContent" style="white-space:pre-wrap; word-break:break-word;"></pre>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tab switching
+  function showTab(tab, btn) {
+    document.querySelectorAll('.admin-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).style.display = 'block';
+    btn.classList.add('active');
+  }
+
+  // View full scan result
+  function viewScan(fullResult) {
+    document.getElementById('modalContent').textContent = fullResult;
+    document.getElementById('resultModal').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('resultModal').classList.remove('open');
+  }
+  document.getElementById('resultModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Toggle user role (promote/demote)
+  async function toggleRole(userId, btn) {
+    if (!confirm('Change this user\'s role?')) return;
+    btn.disabled = true;
+    btn.textContent = '⏳';
+
+    try {
+      const res  = await fetch(`/admin/users/${userId}/toggle-role`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        const newRole   = data.new_role;
+        const badge     = document.getElementById(`role-badge-${userId}`);
+        badge.className = `role-badge role-${newRole}`;
+        badge.textContent = newRole === 'admin' ? '⚡ Admin' : '🌱 User';
+        btn.textContent   = newRole === 'admin' ? '👤 Demote' : '⚡ Promote';
+      } else {
+        alert(data.error || 'Failed.');
+        btn.textContent = '⚡ Promote';
+      }
+    } catch(e) {
+      alert('Request failed.');
+      btn.textContent = '⚡ Promote';
+    }
+    btn.disabled = false;
+  }
+
+  // Delete user
+  async function deleteUser(userId) {
+    if (!confirm('Delete this user and ALL their scans? This is permanent!')) return;
+    try {
+      const res  = await fetch(`/admin/users/${userId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        const row = document.getElementById(`user-row-${userId}`);
+        row.style.opacity = '0';
+        row.style.transition = 'opacity 0.3s';
+        setTimeout(() => row.remove(), 300);
+      } else {
+        alert(data.error || 'Failed to delete user.');
+      }
+    } catch(e) {
+      alert('Request failed.');
+    }
+  }
+
+  // Admin delete scan
+  async function adminDeleteScan(scanId) {
+    if (!confirm('Delete this scan permanently?')) return;
+    try {
+      const res  = await fetch(`/admin/scans/${scanId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        const row = document.getElementById(`scan-row-${scanId}`);
+        row.style.opacity = '0';
+        row.style.transition = 'opacity 0.3s';
+        setTimeout(() => row.remove(), 300);
+      } else {
+        alert(data.error || 'Failed.');
+      }
+    } catch(e) {
+      alert('Request failed.');
+    }
+  }
+</script>
+{% endblock %}

@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}AgriSmart — AI Crop Disease Detection{% endblock %}</title>
   <meta name="description" content="{% block desc %}Detect crop diseases instantly using AI. Get treatment plans, growth tips, and expert agricultural advice powered by Google Gemini.{% endblock %}" />
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>" />
+  <!-- Bilingual Support Library -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="/static/js/translations.js"></script>
+  <script src="/static/js/language.js"></script>
 </head>
 <body>
 
@@ -19,11 +24,33 @@
 <nav class="navbar">
   <a href="/" class="nav-logo"><span>🌱</span> AgriSmart</a>
   <div class="nav-links">
-    <a href="/" id="nav-home">Home</a>
-    <a href="/detect" id="nav-detect">Detect Disease</a>
-    <a href="/chatbot" id="nav-chat">AI Chatbot</a>
-    <a href="/history" id="nav-history">History</a>
-    <a href="/detect" class="nav-cta">Analyze Crop →</a>
+    <!-- Language Toggle Button -->
+    <button onclick="toggleLanguage()" class="nav-lang-btn" id="lang-toggle-btn" style="background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text-primary); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:600; margin-right:8px; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      🌐 <span data-i18n="language_toggle">ગુજરાતી</span>
+    </button>
+
+    <a href="/" id="nav-home" data-i18n="nav_home">Home</a>
+    <a href="/detect" id="nav-detect" data-i18n="nav_detect">Detect Disease</a>
+    <a href="/chatbot" id="nav-chat" data-i18n="nav_chat">AI Chatbot</a>
+    <a href="/history" id="nav-history" data-i18n="nav_history">History</a>
+    <a href="/market" id="nav-market" data-i18n="nav_market">Mandi & Weather</a>
+
+    {% if current_user %}
+      {# Show Dashboard link for logged-in users #}
+      <a href="/dashboard" id="nav-dashboard" data-i18n="dashboard_welcome">Dashboard</a>
+      {% if current_user.role == 'admin' %}
+        <a href="/admin" id="nav-admin" style="color:var(--accent);" data-i18n="admin_title">⚡ Admin</a>
+      {% endif %}
+      {# User menu: name + logout #}
+      <div class="nav-user-menu">
+        <span class="nav-username">👤 {{ current_user.name }}</span>
+        <a href="/logout" class="nav-logout-btn" data-i18n="nav_logout">Logout</a>
+      </div>
+    {% else %}
+      {# Not logged in: show Login and Register #}
+      <a href="/login" id="nav-login" data-i18n="login_title">Login</a>
+      <a href="/register" class="nav-cta" data-i18n="register_button">Register →</a>
+    {% endif %}
   </div>
 </nav>
 
@@ -32,16 +59,26 @@
 </main>
 
 <footer>
-  <p>🌱 AgriSmart &mdash; Built with ❤️ using Python & Google Gemini AI &nbsp;|&nbsp; <a href="/detect">Start Analyzing</a></p>
+  <p>🌱 AgriSmart &mdash; Built with ❤️ using Python &amp; Google Gemini AI &nbsp;|&nbsp; <a href="/detect">Start Analyzing</a></p>
 </footer>
 
 <script>
   // Highlight active nav link
   const path = window.location.pathname;
-  if(path === '/') document.getElementById('nav-home').classList.add('active');
-  if(path === '/detect') document.getElementById('nav-detect').classList.add('active');
-  if(path === '/chatbot') document.getElementById('nav-chat').classList.add('active');
-  if(path === '/history') document.getElementById('nav-history').classList.add('active');
+  if(path === '/') document.getElementById('nav-home')?.classList.add('active');
+  if(path === '/detect') document.getElementById('nav-detect')?.classList.add('active');
+  if(path === '/chatbot') document.getElementById('nav-chat')?.classList.add('active');
+  if(path === '/history') document.getElementById('nav-history')?.classList.add('active');
+  if(path === '/market') document.getElementById('nav-market')?.classList.add('active');
+  if(path === '/dashboard') document.getElementById('nav-dashboard')?.classList.add('active');
+  if(path === '/admin') document.getElementById('nav-admin')?.classList.add('active');
+
+  // Connect toggle button to LanguageManager
+  function toggleLanguage() {
+    if (typeof LanguageManager !== 'undefined') {
+      LanguageManager.toggleLanguage();
+    }
+  }
 </script>
 {% block scripts %}{% endblock %}
 </body>

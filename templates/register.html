@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Register — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <span>🌱</span>
+      <span class="auth-logo-text">AgriSmart</span>
+    </div>
+
+    <h1 class="auth-title" data-i18n="register_title">Create Account</h1>
+    <p class="auth-sub">Join thousands of farmers protecting their crops with AI</p>
+
+    <!-- Error message -->
+    {% if error %}
+    <div class="auth-alert auth-alert-error">
+      ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Register Form -->
+    <form method="POST" action="/register" class="auth-form" id="registerForm">
+      <div class="form-group">
+        <label for="name" data-i18n="register_name">Full Name</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Your full name"
+            required
+            autocomplete="name"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone" data-i18n="register_phone">Mobile Number</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📞</span>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="Enter 10-digit mobile number"
+            data-i18n="register_phone_placeholder"
+            required
+            pattern="[0-9]{10}"
+            maxlength="10"
+            autocomplete="tel"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" data-i18n="register_password">Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Create a strong password"
+            required
+            minlength="6"
+            autocomplete="new-password"
+          />
+          <button type="button" class="toggle-pw" onclick="togglePw('password', this)">👁</button>
+        </div>
+      </div>
+
+      <!-- Password strength bar -->
+      <div class="pw-strength" id="pwStrength" style="display:none">
+        <div class="pw-bar"><div class="pw-fill" id="pwFill"></div></div>
+        <span class="pw-label" id="pwLabel"></span>
+      </div>
+
+      <button type="submit" class="auth-submit-btn" id="submitBtn">
+        <span data-i18n="register_button">Register</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      <a href="/login" data-i18n="register_login">Already have an account? Login</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    input.type  = input.type === 'password' ? 'text' : 'password';
+    btn.textContent = input.type === 'password' ? '👁' : '🙈';
+  }
+
+  // Password strength indicator
+  document.getElementById('password').addEventListener('input', function() {
+    const val = this.value;
+    const bar  = document.getElementById('pwStrength');
+    const fill = document.getElementById('pwFill');
+    const label = document.getElementById('pwLabel');
+
+    if (!val) { bar.style.display = 'none'; return; }
+    bar.style.display = 'block';
+
+    let strength = 0;
+    if (val.length >= 6)  strength++;
+    if (val.length >= 10) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+    const levels = [
+      { pct: '20%', color: '#ef4444', text: 'Very Weak' },
+      { pct: '40%', color: '#f97316', text: 'Weak' },
+      { pct: '60%', color: '#eab308', text: 'Fair' },
+      { pct: '80%', color: '#22c55e', text: 'Strong' },
+      { pct: '100%', color: '#00d4aa', text: 'Very Strong' },
+    ];
+    const lvl = levels[Math.min(strength - 1, 4)] || levels[0];
+    fill.style.width      = lvl.pct;
+    fill.style.background = lvl.color;
+    label.textContent     = lvl.text;
+    label.style.color     = lvl.color;
+  });
+
+  document.getElementById('registerForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<span>Creating Account…</span>';
+    btn.disabled  = true;
+  });
+</script>
+{% endblock %}

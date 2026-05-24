@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+{% block title %}Mandi & Weather Dashboard — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+
+  <!-- Header -->
+  <div class="dash-header" style="margin-bottom: 2rem;">
+    <div>
+      <h1 class="dash-name" data-i18n="market_title">Mandi Market & Weather Dashboard</h1>
+      <p class="dash-email" data-i18n="market_subtitle" style="color: var(--text-secondary); margin-top: 4px;">
+        Stay updated with live APMC crop rates and local farming weather alerts in Gujarat
+      </p>
+    </div>
+  </div>
+
+  <!-- Interactive Weather Forecast Section -->
+  <div class="dash-section" style="margin-bottom: 2.5rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 16px; padding: 24px; backdrop-filter: blur(10px);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+      <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 8px;" data-i18n="market_weather_sec">
+        🌦️ Region Weather Forecast
+      </h2>
+      <div style="display: flex; align-items: center; gap: 16px; margin-left: auto; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span data-i18n="market_weather_select" style="font-size: 0.9rem; color: var(--text-secondary);">Select Region:</span>
+          <select id="weatherRegion" onchange="updateWeather()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; outline: none; cursor: pointer; font-weight: 600;">
+            {% for code, data in weather_data.items() %}
+            <option value="{{ code }}">{{ data.city_en }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span data-i18n="market_weather_date" style="font-size: 0.9rem; color: var(--text-secondary);">Select Date:</span>
+          <input
+            type="date"
+            id="weatherDate"
+            value="2026-05-24"
+            min="2026-05-22"
+            max="2026-05-28"
+            onchange="updateWeather()"
+            style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; outline: none; cursor: pointer; font-weight: 600; color-scheme: dark;"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Weather Display Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px;">
+      <!-- Current Condition Card -->
+      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px;">
+        <div id="weatherIcon" style="font-size: 4rem; animation: pulse 2s infinite ease-in-out;">☀️</div>
+        <div>
+          <div id="weatherTemp" style="font-size: 3rem; font-weight: 700; color: var(--text-primary); line-height: 1;">38°C</div>
+          <div id="weatherCondition" style="font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-top: 4px;">Sunny</div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_humidity">Humidity</span>
+          <span id="weatherHumidity" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">45%</span>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_wind">Wind Speed</span>
+          <span id="weatherWind" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">14 km/h</span>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_rain">Rain Probability</span>
+          <span id="weatherRain" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">10%</span>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_condition">Condition</span>
+          <span id="weatherConditionShort" style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">Sunny</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Weather Advisory Alert Box -->
+    <div style="background: rgba(0, 212, 170, 0.06); border: 1px solid rgba(0, 212, 170, 0.2); border-radius: 12px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; transition: all 0.3s ease-in-out;">
+      <div style="font-size: 1.5rem; line-height: 1;">🌱</div>
+      <div>
+        <h4 style="margin: 0; font-size: 1rem; color: var(--accent); font-weight: 700;" data-i18n="market_weather_advice">Agri Advisory (ખેતી સલાહ)</h4>
+        <p id="weatherAdvice" style="margin: 6px 0 0 0; font-size: 0.92rem; color: var(--text-primary); line-height: 1.5;">
+          Ideal dry weather. Suitable for harvesting wheat and cumin, or applying fertilizers.
+        </p>
+      </div>
+    </div>
+
+    <!-- 7-Day Forecast & History Strips -->
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 16px;">
+      {% for i in range(7) %}
+      <div class="forecast-day-card" id="forecast-{{ i }}" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <span class="day-label" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Mon</span>
+        <span class="day-icon" style="font-size: 1.75rem;">☀️</span>
+        <span class="day-temp" style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">39°C</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Live Mandi Rates Section -->
+  <div class="dash-section">
+    <div class="dash-section-header" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;">
+      <div>
+        <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;" data-i18n="market_mandi_sec">
+          📊 APMC Live Mandi Rates
+        </h2>
+      </div>
+
+      <!-- Live Search & Filtering Controls -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; max-width: 800px; margin-left: auto;">
+        <div style="position: relative; flex: 2; min-width: 180px;">
+          <input
+            type="text"
+            id="mandiSearch"
+            onkeyup="filterMandi()"
+            placeholder="Search by crop or APMC market..."
+            data-i18n="market_mandi_search"
+            style="width: 100%; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px 12px 8px 32px; outline: none; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border)'"
+          />
+          <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; color: var(--text-muted);">🔍</span>
+        </div>
+
+        <input
+          type="date"
+          id="mandiDate"
+          value="2026-05-24"
+          min="2026-04-25"
+          max="2026-05-24"
+          onchange="filterMandi()"
+          style="flex: 1; min-width: 140px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px; outline: none; cursor: pointer; font-weight: 600; color-scheme: dark;"
+        />
+
+        <select id="mandiCropFilter" onchange="filterMandi()" style="flex: 1; min-width: 110px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px; outline: none; cursor: pointer; font-weight: 600;">
+          <option value="all" data-i18n="market_mandi_filter_all_crops">All Crops</option>
+        </select>
+
+        <select id="mandiMarketFilter" onchange="filterMandi()" style="flex: 1; min-width: 110px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px; outline: none; cursor: pointer; font-weight: 600;">
+          <option value="all" data-i18n="market_mandi_filter_all_markets">All Markets</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Live Rates Table -->
+    <div class="dash-table-wrapper" style="box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 12px; overflow: hidden;">
+      <table class="dash-table" id="mandiTable">
+        <thead>
+          <tr>
+            <th data-i18n="market_mandi_col_market">APMC Market</th>
+            <th data-i18n="market_mandi_col_crop">Crop</th>
+            <th data-i18n="market_mandi_col_arrival" style="text-align: right;">Daily Arrival (Quintal)</th>
+            <th data-i18n="market_mandi_col_range" style="text-align: right;">Price Range (₹/Q)</th>
+            <th data-i18n="market_mandi_col_modal" style="text-align: right;">Modal Price (₹/Q)</th>
+            <th data-i18n="market_mandi_col_trend" style="text-align: center;">Daily Trend</th>
+          </tr>
+        </thead>
+        <tbody id="mandiTableBody">
+          <!-- Populated dynamically via JS to support real-time transitions and clean rendering -->
+        </tbody>
+      </table>
+      <div id="mandiEmptyState" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">🌾</div>
+        <p>No rates found matching your filters.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Weather Forecast full dataset
+  const weatherData = {{ weather_data | tojson }};
+
+  // APMC Mandi rates full dataset
+  const mandiPrices = {{ mandi_prices | tojson }};
+
+  // Formatting numbers/digits dynamically depending on language (adds Gujarati numerals!)
+  function translateNumber(val, lang) {
+    if (val === undefined || val === null) return '';
+    let numString = typeof val === 'number' ? val.toLocaleString('en-IN') : String(val);
+    if (lang !== 'gu') return numString;
+    const guDigits = ['૦', '૧', '૨', '૩', '૪', '૫', '૬', '૭', '૮', '૯'];
+    return numString.replace(/[0-9]/g, w => guDigits[+w]);
+  }
+
+  // Format date strings beautifully for English and Gujarati
+  function formatMandiDate(dateString, lang) {
+    const parts = dateString.split('-'); // ["2026", "05", "24"]
+    if (parts.length !== 3) return dateString;
+    const day = parseInt(parts[2]);
+    const year = parseInt(parts[0]);
+    if (lang === 'gu') {
+      const monthsGu = {5: 'મે'};
+      const month = monthsGu[parseInt(parts[1])] || parts[1];
+      return `${translateNumber(day, 'gu')} ${month}, ${translateNumber(year, 'gu')}`;
+    } else {
+      const monthsEn = {5: 'May'};
+      const month = monthsEn[parseInt(parts[1])] || parts[1];
+      return `${month} ${day}, ${year}`;
+    }
+  }
+
+  // Populate dynamic select filter lists (Crops and Markets)
+  function populateFilters() {
+    const crops = new Set();
+    const markets = new Set();
+
+    mandiPrices.forEach(item => {
+      crops.add(item.crop_en);
+      markets.add(item.apmc_en);
+    });
+
+    const cropSelect = document.getElementById('mandiCropFilter');
+    const marketSelect = document.getElementById('mandiMarketFilter');
+
+    // Fetch active translation mappings
+    const lang = getCurrentLanguage();
+    const isGu = lang === 'gu';
+
+    // Clear existing options before populating to prevent duplicate items from multiple DOMContentLoaded hooks
+    cropSelect.innerHTML = `<option value="all">${translations[lang]['market_mandi_filter_all_crops'] || 'All Crops'}</option>`;
+    marketSelect.innerHTML = `<option value="all">${translations[lang]['market_mandi_filter_all_markets'] || 'All Markets'}</option>`;
+
+    // Populate crops
+    crops.forEach(crop => {
+      const option = document.createElement('option');
+      option.value = crop;
+      const translationKey = `crop_${crop.toLowerCase()}`;
+      const translated = (typeof translations !== 'undefined' && translations[lang] && translations[lang][translationKey]);
+      if (translated) {
+        option.textContent = translated;
+      } else {
+        const mandiItem = mandiPrices.find(x => x.crop_en === crop);
+        option.textContent = (isGu && mandiItem) ? mandiItem.crop_gu : crop;
+      }
+      cropSelect.appendChild(option);
+    });
+
+    // Populate markets
+    markets.forEach(market => {
+      const option = document.createElement('option');
+      option.value = market;
+      const mandiItem = mandiPrices.find(x => x.apmc_en === market);
+      option.textContent = (isGu && mandiItem) ? mandiItem.apmc_gu : market;
+      marketSelect.appendChild(option);
+    });
+  }
+
+  function updateWeather() {
+    const region = document.getElementById('weatherRegion').value;
+    const w = weatherData[region];
+    if (!w) return;
+
+    const dateInput = document.getElementById('weatherDate');
+    let selectedDateStr = dateInput.value;
+    if (!selectedDateStr) {
+      selectedDateStr = "2026-05-24";
+      dateInput.value = "2026-05-24";
+    }
+
+    // Find the matching forecast item index
+    const dateIdx = w.forecast.findIndex(f => f.date === selectedDateStr);
+    const activeIdx = dateIdx !== -1 ? dateIdx : 0;
+    const activeDay = w.forecast[activeIdx];
+
+    const lang = getCurrentLanguage();
+    const isGu = lang === 'gu';
+
+    // Set weather details
+    document.getElementById('weatherIcon').textContent = activeDay.icon;
+    document.getElementById('weatherTemp').textContent = `${translateNumber(activeDay.temp, lang)}°C`;
+    
+    document.getElementById('weatherCondition').textContent = isGu ? activeDay.condition_gu : activeDay.condition_en;
+    document.getElementById('weatherConditionShort').textContent = isGu ? activeDay.condition_gu : activeDay.condition_en;
+    document.getElementById('weatherHumidity').textContent = `${translateNumber(activeDay.humidity, lang)}%`;
+    document.getElementById('weatherWind').textContent = isGu ? `${translateNumber(activeDay.wind, lang)} કિમી/કલાક` : `${translateNumber(activeDay.wind, lang)} km/h`;
+    document.getElementById('weatherRain').textContent = `${translateNumber(activeDay.rain_prob, lang)}%`;
+    document.getElementById('weatherAdvice').textContent = isGu ? activeDay.advice_gu : activeDay.advice_en;
+
+    // Load 5-day forecast strip
+    w.forecast.forEach((f, idx) => {
+      const fCard = document.getElementById(`forecast-${idx}`);
+      if (fCard) {
+        fCard.querySelector('.day-label').textContent = isGu ? f.day_gu : f.day_en;
+        fCard.querySelector('.day-icon').textContent = f.icon;
+        fCard.querySelector('.day-temp').textContent = `${translateNumber(f.temp, lang)}°C`;
+
+        // Highlight the selected day's card
+        if (idx === activeIdx) {
+          fCard.style.background = 'rgba(0, 212, 170, 0.15)';
+          fCard.style.borderColor = 'var(--accent)';
+          fCard.style.transform = 'scale(1.05)';
+        } else {
+          fCard.style.background = 'rgba(255, 255, 255, 0.02)';
+          fCard.style.borderColor = 'rgba(255,255,255,0.04)';
+          fCard.style.transform = 'scale(1)';
+        }
+
+        // Add clickable interaction to update calendar and view that forecast day
+        fCard.style.cursor = 'pointer';
+        fCard.onclick = () => {
+          dateInput.value = f.date;
+          updateWeather();
+        };
+      }
+    });
+  }
+
+  // Render the APMC rates table cleanly in both Quintal and Maund units
+  function renderMandiTable(data) {
+    const tbody = document.getElementById('mandiTableBody');
+    const emptyState = document.getElementById('mandiEmptyState');
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+      emptyState.style.display = 'block';
+      document.getElementById('mandiTable').style.display = 'none';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    document.getElementById('mandiTable').style.display = 'table';
+
+    const lang = getCurrentLanguage();
+    const isGu = lang === 'gu';
+
+    data.forEach(item => {
+      const tr = document.createElement('tr');
+
+      // Localized names
+      const marketName = isGu ? item.apmc_gu : item.apmc_en;
+      const cropKey = `crop_${item.crop_en.toLowerCase()}`;
+      const translatedCrop = (typeof translations !== 'undefined' && translations[lang] && translations[lang][cropKey]);
+      const cropName = translatedCrop ? translatedCrop : (isGu ? item.crop_gu : item.crop_en);
+
+      // Trend badge
+      let badgeClass = 'badge-blue';
+      let trendIcon = '➖';
+      if (item.trend_dir === 'up') {
+        badgeClass = 'badge-green';
+        trendIcon = '📈';
+      } else if (item.trend_dir === 'down') {
+        badgeClass = 'badge-red';
+        trendIcon = '📉';
+      }
+
+      // Unit Conversions (Quintal and Man - 20 kg)
+      const formattedQRange = `₹${translateNumber(item.min_price, lang)} - ₹${translateNumber(item.max_price, lang)} <span style="font-size:0.75rem; color:var(--text-muted);">/ Q</span>`;
+      const formattedManRange = `₹${translateNumber(Math.round(item.min_price / 5), lang)} - ₹${translateNumber(Math.round(item.max_price / 5), lang)} <span style="font-size:0.75rem; color:var(--text-muted);">${isGu ? '/ મણ' : '/ 20kg'}</span>`;
+
+      const formattedQModal = `₹${translateNumber(item.modal_price, lang)} <span style="font-size:0.75rem; color:var(--text-muted);">/ Q</span>`;
+      const formattedManModal = `₹${translateNumber(Math.round(item.modal_price / 5), lang)} <span style="font-size:0.75rem; color:var(--text-muted);">${isGu ? '/ મણ' : '/ 20kg'}</span>`;
+
+      tr.innerHTML = `
+        <td style="font-weight:600; color:var(--text-primary);">
+          <span style="margin-right:6px;">🏢</span>${marketName}
+        </td>
+        <td style="font-weight:600; color:var(--accent);">
+          <span style="margin-right:4px;">🌿</span>${cropName}
+        </td>
+        <td class="td-num" style="text-align: right; font-weight: 500; color: var(--text-primary);">
+          ${translateNumber(item.arrival, lang)}
+        </td>
+        <td class="td-num" style="text-align: right; color: var(--text-primary); font-weight: 500;">
+          <div style="font-weight: 600;">${formattedQRange}</div>
+          <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">${formattedManRange}</div>
+        </td>
+        <td class="td-num" style="text-align: right; font-weight: 700; color: var(--accent);">
+          <div style="font-weight: 700;">${formattedQModal}</div>
+          <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; font-weight: 500;">${formattedManModal}</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="badge ${badgeClass}" style="display:inline-flex; align-items:center; gap:4px; font-weight:600; font-size:0.85rem;">
+            ${trendIcon} ${isGu ? translateNumber(item.trend, lang) : item.trend}
+          </span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Filter Mandi rates dynamically including Search, Crop, APMC and Date calendar input
+  function filterMandi() {
+    const search = document.getElementById('mandiSearch').value.toLowerCase().trim();
+    const crop = document.getElementById('mandiCropFilter').value;
+    const market = document.getElementById('mandiMarketFilter').value;
+    let dateVal = document.getElementById('mandiDate').value;
+    if (!dateVal) {
+      dateVal = "2026-05-24";
+      document.getElementById('mandiDate').value = "2026-05-24";
+    }
+
+    const lang = getCurrentLanguage();
+    const isGu = lang === 'gu';
+
+    const filtered = mandiPrices.filter(item => {
+      // Search matches
+      const marketName = (isGu ? item.apmc_gu : item.apmc_en).toLowerCase();
+      const cropKey = `crop_${item.crop_en.toLowerCase()}`;
+      const translatedCrop = (typeof translations !== 'undefined' && translations[lang] && translations[lang][cropKey]);
+      const cropName = (translatedCrop ? translatedCrop : (isGu ? item.crop_gu : item.crop_en)).toLowerCase();
+
+      const matchesSearch = marketName.includes(search) || cropName.includes(search) || item.crop_en.toLowerCase().includes(search) || item.apmc_en.toLowerCase().includes(search);
+
+      // Filter matches
+      const matchesCrop = crop === 'all' || item.crop_en === crop;
+      const matchesMarket = market === 'all' || item.apmc_en === market;
+      const matchesDate = item.date === dateVal;
+
+      return matchesSearch && matchesCrop && matchesMarket && matchesDate;
+    });
+
+    renderMandiTable(filtered);
+  }
+
+  // Seamless translation updates upon language switches
+  const originalApplyLanguage = LanguageManager.applyLanguage;
+  LanguageManager.applyLanguage = function(lang) {
+    originalApplyLanguage.call(LanguageManager, lang);
+
+    // Refresh weather details in selected language
+    updateWeather();
+
+    // Repopulate Mandi select options (keeping selected values)
+    const cropSelect = document.getElementById('mandiCropFilter');
+    const marketSelect = document.getElementById('mandiMarketFilter');
+
+    const selectedCrop = cropSelect.value;
+    const selectedMarket = marketSelect.value;
+
+    populateFilters();
+
+    cropSelect.value = selectedCrop;
+    marketSelect.value = selectedMarket;
+
+    filterMandi();
+  };
+
+  // Initialize page components
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize Weather Date Calendar Range (Past 2 days to Day 5 forecast)
+    const weatherDateInput = document.getElementById('weatherDate');
+    weatherDateInput.min = "2026-05-22";
+    weatherDateInput.max = "2026-05-28";
+    weatherDateInput.value = "2026-05-24";
+
+    // 2. Initialize Mandi Date Calendar Range (Past 30 days to Today)
+    const mandiDateInput = document.getElementById('mandiDate');
+    mandiDateInput.min = "2026-04-25";
+    mandiDateInput.max = "2026-05-24";
+    mandiDateInput.value = "2026-05-24";
+
+    // 3. Populate filters and render initial states
+    populateFilters();
+    updateWeather();
+    filterMandi();
+  });
+</script>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .forecast-day-card {
+    transition: transform 0.2s, background-color 0.2s;
+  }
+  .forecast-day-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--accent) !important;
+  }
+  select option {
+    background: #1a1a2e;
+    color: #e0e0e0;
+  }
+</style>
+{% endblock %}

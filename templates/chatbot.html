@@ -11,23 +11,23 @@
       <div style="width:40px; height:40px; border-radius:12px; background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:1.2rem">🌱</div>
       <div>
         <div style="font-weight:600; font-size:0.9rem">AgriBot</div>
-        <div style="font-size:0.75rem; color:var(--accent)">● Online</div>
+        <div style="font-size:0.75rem; color:var(--accent)" data-i18n="status_online">● Online</div>
       </div>
     </div>
 
-    <div class="chat-sidebar-title">Quick Questions</div>
+    <div class="chat-sidebar-title" data-i18n="sidebar_quick">Quick Questions</div>
 
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🍅 Why are my tomato leaves turning yellow?</button>
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">💧 How often should I water my crops?</button>
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🧪 Best fertilizer for wheat?</button>
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🐛 How to control pests organically?</button>
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🌱 How to improve soil health?</button>
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">📅 When to plant rice in India?</button>
-    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">🌾 Tips to increase crop yield?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_tomato">🍅 Why are my tomato leaves turning yellow?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_water">💧 How often should I water my crops?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_fertilizer">🧪 Best fertilizer for wheat?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_pests">🐛 How to control pests organically?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_soil">🌱 How to improve soil health?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_rice">📅 When to plant rice in India?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)" data-i18n="q_yield">🌾 Tips to increase crop yield?</button>
 
     <div style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border)">
       <button onclick="clearChat()" style="width:100%; background:none; border:1px solid var(--glass-border); color:var(--text-muted); padding:8px; border-radius:8px; cursor:pointer; font-size:0.8rem; transition:all 0.2s"
-        onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--glass-border)'; this.style.color='var(--text-muted)'">🗑️ Clear Chat</button>
+        onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--glass-border)'; this.style.color='var(--text-muted)'" data-i18n="sidebar_clear">🗑️ Clear Chat</button>
     </div>
   </div>
 
@@ -37,24 +37,17 @@
       <div class="bot-avatar">🤖</div>
       <div>
         <div style="font-weight:600; font-size:0.95rem">AgriBot</div>
-        <div class="bot-status">Online — Ready to help</div>
+        <div class="bot-status" data-i18n="bot_status">Online — Ready to help</div>
       </div>
-      <div style="margin-left:auto; font-size:0.8rem; color:var(--text-muted)">Powered by Gemini AI 🌟</div>
+      <div style="margin-left:auto; font-size:0.8rem; color:var(--text-muted)" data-i18n="bot_powered">Powered by Gemini AI 🌟</div>
     </div>
 
     <div class="messages" id="messages">
       <div class="message bot">
         <div class="msg-avatar">🤖</div>
         <div>
-          <div class="msg-bubble">
-            👋 Hello! I'm <strong>AgriBot</strong>, your AI agricultural assistant!<br><br>
-            I can help you with:<br>
-            🔬 Crop disease diagnosis<br>
-            🌱 Growing tips & techniques<br>
-            🧪 Fertilizer recommendations<br>
-            💧 Irrigation & soil advice<br>
-            🐛 Pest control methods<br><br>
-            What can I help you with today?
+          <div class="msg-bubble" data-i18n="chat_welcome">
+            Hello! I am your AI farming assistant. How can I help you today?
           </div>
           <div class="msg-time">Just now</div>
         </div>
@@ -63,11 +56,11 @@
 
     <div class="chat-input-area">
       <div class="input-row">
-        <textarea class="chat-input" id="chatInput" placeholder="Ask anything about your crops..." rows="1"
+        <textarea class="chat-input" id="chatInput" placeholder="Ask anything about your crops..." rows="1" data-i18n="chat_placeholder"
           onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
       </div>
-      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; text-align:center">Press Enter to send • Shift+Enter for new line</div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; text-align:center" data-i18n="chat_tip">Press Enter to send • Shift+Enter for new line</div>
     </div>
   </div>
 
@@ -145,10 +138,14 @@ async function sendMessage() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, history: chatHistory.slice(-10) })
+      body: JSON.stringify({ message, history: chatHistory.slice(-10), language: getCurrentLanguage() })
     });
     const data = await res.json();
     removeTyping();
+    if (res.status === 401 || data.redirect) {
+      window.location.href = '/login';
+      return;
+    }
     const reply = data.success ? data.response : '⚠️ Sorry, I had trouble responding. Please try again.';
     addMessage('bot', reply);
     chatHistory.push({ role: 'model', content: reply });

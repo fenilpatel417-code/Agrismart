@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriBot - Farming Assistant</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="logo">🌿 AgriSmart</div>
+    <div class="nav-links">
+      <a href="/">🔍 Disease Detector</a>
+      <a href="/chat" class="active">🤖 AI Chatbot</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>AgriBot Assistant</h1>
+    <p>Ask me anything about crop diseases, fertilizers, irrigation, or farming tips</p>
+  </div>
+
+  <main class="chat-main">
+    <div class="card chat-card">
+      <div id="chatBox">
+        <div class="msg bot">
+          👋 Hello! I'm <strong>AgriBot</strong>, your AI farming assistant.<br><br>
+          I can help you with:<br>
+          🌱 Crop disease identification & treatment<br>
+          💧 Irrigation and fertilizer advice<br>
+          🌦️ Season-based farming tips<br><br>
+          What would you like to know?
+        </div>
+      </div>
+
+      <div class="suggestions">
+        <span onclick="quickAsk('How to treat tomato early blight?')">Tomato blight treatment?</span>
+        <span onclick="quickAsk('Best fertilizer for wheat crop?')">Wheat fertilizer?</span>
+        <span onclick="quickAsk('How to control aphids naturally?')">Control aphids?</span>
+        <span onclick="quickAsk('What crops grow well in summer in India?')">Summer crops in India?</span>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" id="userInput"
+               placeholder="Type your farming question here..."
+               onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="sendBtn" onclick="sendMessage()">Send ➤</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let history = [];
+
+    function quickAsk(text) {
+      document.getElementById("userInput").value = text;
+      sendMessage();
+    }
+
+    async function sendMessage() {
+      const input   = document.getElementById("userInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage(message, "user");
+      history.push({ role: "user", content: message });
+      input.value = "";
+      sendBtn.disabled = true;
+
+      const typingDiv = addMessage("⏳ AgriBot is thinking...", "bot typing");
+
+      try {
+        const res  = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history: history.slice(-10) })
+        });
+        const data = await res.json();
+        typingDiv.innerHTML = data.reply.replace(/\n/g, "<br>");
+        typingDiv.classList.remove("typing");
+        history.push({ role: "model", content: data.reply });
+      } catch (err) {
+        typingDiv.textContent = "❌ Error connecting. Please check your API key.";
+      }
+
+      sendBtn.disabled = false;
+      input.focus();
+    }
+
+    function addMessage(text, role) {
+      const box = document.getElementById("chatBox");
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      return div;
+    }
+  </script>
+</body>
+</html>
