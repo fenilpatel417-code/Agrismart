@@ -9,8 +9,14 @@ from routers import detection, chatbot, history, auth, market
 from services.auth_service import get_current_user
 from database.db import SessionLocal
 import os
+from database.db import Base, engine
 
-
+@app.on_event("startup")
+async def startup():
+    Base.metadata.create_all(bind=engine)
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create all tables on startup (safe — won't drop existing data)
