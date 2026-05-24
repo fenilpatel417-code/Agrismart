@@ -286,8 +286,17 @@ def _analyze_sync(image_bytes: bytes, analysis_type: str, language: str = "en") 
         # ── Language Specific Instructions ──
         if language == "gu":
             lang_instruction = """
-CRITICAL LANGUAGE INSTRUCTION:
-તમારે સંપૂર્ણ જવાબ ગુજરાતી ભાષામાં આપવો જ પડશે. જવાબનું માળખું અને ચાવીરૂપ મથાળાઓ (જેવા કે 🌿 PLANT IDENTIFIED, 🦠 DISEASE STATUS, ⚠️ SEVERITY, 📊 CONFIDENCE, 📋 SYMPTOMS OBSERVED, 🔬 ROOT CAUSE, 💊 TREATMENT PLAN, 🛡️ PREVENTION, ⏰ URGENCY, 📋 CROP DETAILS, 📋 TOP 3 POSSIBLE MATCHES, 📋 DESCRIPTION, 🌱 GROWING CONDITIONS, 📅 GROWING TIMELINE, 💰 ECONOMIC VALUE, 📈 CURRENT GROWTH STAGE & HEALTH, 🚀 TOP 5 TIPS TO GROW FASTER IN GUJARAT, 🧪 FERTILIZER RECOMMENDATIONS, 💧 WATER & IRRIGATION, ☀️ SUNLIGHT & SPACING, 📅 HARVEST OPTIMIZATION, 🧴 CHEMICAL TREATMENTS (GUJARAT MARKET), 🌿 ORGANIC/NATURAL TREATMENTS, ⚠️ RECOVERY & TREATING STAGES, 📅 RECOVERY TIMELINE, 🌱 ESTIMATED GROWTH STAGE, 🧪 RECOMMENDED FERTILIZERS (NPK RATIO), 🧪 MICRONUTRIENT ADVICE, 📅 FERTILIZER SCHEDULE, 💧 DRIP FERTIGATION SCHEDULE, ⚠️ WHAT TO AVOID, 💡 PRO TIP) અપરકેસ અંગ્રેજીમાં જ રહેવા જોઈએ જેમ ફોર્મેટમાં દર્શાવેલ છે. બાકીનું તમામ વિગતવાર વર્ણન, લક્ષણો, ઉપાયો, ખાતર વિગતો અને ટીપ્સ સંપૂર્ણપણે ગુજરાતી ભાષામાં જ હોવી જોઈએ.
+CRITICAL LANGUAGE INSTRUCTION (IMPORTANT):
+1. You MUST respond completely in the Gujarati language (ગુજરાતી) for all descriptive texts, symptoms, root causes, chemical/organic treatment details, prevention tips, growth recommendations, disclaimers, economic values, and warnings.
+2. Even if the identified crop (e.g. grapes, etc.) is NOT on your primary list of crops grown in Gujarat, you MUST still provide all analyses, warnings, scientific names, details, and disclaimers in Gujarati (ગુજરાતી). Do NOT fall back to English under any circumstances.
+3. The ONLY parts of the response that must remain in uppercase English are the exact headers/keys (e.g., 🌿 PLANT IDENTIFIED, 🦠 DISEASE STATUS, ⚠️ SEVERITY, 📊 CONFIDENCE, 📋 SYMPTOMS OBSERVED, 🔬 ROOT CAUSE, 💊 TREATMENT PLAN, 🛡️ PREVENTION, ⏰ URGENCY, 📋 CROP DETAILS, 📋 TOP 3 POSSIBLE MATCHES, 📋 DESCRIPTION, 🌱 GROWING CONDITIONS, 📅 GROWING TIMELINE, 💰 ECONOMIC VALUE, 📈 CURRENT GROWTH STAGE & HEALTH, 🚀 TOP 5 TIPS TO GROW FASTER IN GUJARAT, 🧪 FERTILIZER RECOMMENDATIONS, 💧 WATER & IRRIGATION, ☀️ SUNLIGHT & SPACING, 📅 HARVEST OPTIMIZATION, 🧴 CHEMICAL TREATMENTS (GUJARAT MARKET), 🌿 ORGANIC/NATURAL TREATMENTS, ⚠️ RECOVERY & TREATING STAGES, 📅 RECOVERY TIMELINE, 🌱 ESTIMATED GROWTH STAGE, 🧪 RECOMMENDED FERTILIZERS (NPK RATIO), 🧪 MICRONUTRIENT ADVICE, 📅 FERTILIZER SCHEDULE, 💧 DRIP FERTIGATION SCHEDULE, ⚠️ WHAT TO AVOID, 💡 PRO TIP) so that they can be matched and parsed properly by the system.
+4. Translation rules:
+   - "🌿 PLANT IDENTIFIED: Grape" -> "🌿 PLANT IDENTIFIED: દ્રાક્ષ (Grapes)" (Scientific name can be in parenthesis).
+   - If a disease status, severity, or any detailed note is written, it must be translated entirely to Gujarati.
+   - Any expert notice, warning, or crop compatibility notice must be written in Gujarati (e.g., instead of "grapes are not on the list...", write: "દ્રાક્ષ ગુજરાત માટેના મુખ્ય પાકની યાદીમાં નથી, પરંતુ તેનું વિશ્લેષણ નીચે મુજબ છે...").
+   - If you need to mention chemical/pesticide/fungicide names, write them in Gujarati script or English in parentheses, but keep the surrounding instructions in Gujarati.
+
+તમારે આ સૂચનાઓનું સખત પાલન કરવું જ પડશે. તમામ વિગતવાર વર્ણન, લક્ષણો, ઉપાયો, ખાતર વિગતો અને ટીપ્સ સંપૂર્ણપણે ગુજરાતી ભાષામાં જ હોવી જોઈએ.
 """
             prompt += "\n" + lang_instruction
 
