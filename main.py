@@ -9,14 +9,8 @@ from routers import detection, chatbot, history, auth, market
 from services.auth_service import get_current_user
 from database.db import SessionLocal
 import os
-from database.db import Base, engine
 
-@app.on_event("startup")
-async def startup():
-    Base.metadata.create_all(bind=engine)
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create all tables on startup (safe — won't drop existing data)
@@ -109,3 +103,7 @@ async def forbidden_handler(request: Request, exc):
     return templates.TemplateResponse("403.html", {
         "request": request, "current_user": _get_user(request)
     }, status_code=403)
+
+@app.on_event("startup")
+async def startup():
+    Base.metadata.create_all(bind=engine)
