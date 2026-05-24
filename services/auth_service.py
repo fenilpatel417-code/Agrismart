@@ -31,7 +31,7 @@ EXPIRE_DAYS = 7
 COOKIE_NAME = "access_token"
 
 # ─── Bcrypt context ──────────────────────────────────────────────────────────
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 
 import bcrypt
