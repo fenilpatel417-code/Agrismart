@@ -51,8 +51,49 @@
       <a href="/login" id="nav-login" data-i18n="login_title">Login</a>
       <a href="/register" class="nav-cta" data-i18n="register_button">Register →</a>
     {% endif %}
+
+    <!-- Hamburger Button (Mobile Only) -->
+    <button class="nav-hamburger" id="nav-hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 </nav>
+
+<!-- Mobile Drawer Overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="toggleMobileMenu()"></div>
+
+<!-- Mobile Side Navigation Drawer -->
+<div class="nav-mobile-drawer" id="mobileDrawer">
+  <div class="drawer-header">
+    <a href="/" class="drawer-logo"><span>🌱</span> AgriSmart</a>
+    <button class="drawer-close" onclick="toggleMobileMenu()">&times;</button>
+  </div>
+  <div class="drawer-links">
+    <a href="/" class="mobile-nav-link" id="mob-nav-home" onclick="toggleMobileMenu()"><span class="link-icon">🏠</span> <span data-i18n="nav_home">Home</span></a>
+    <a href="/detect" class="mobile-nav-link" id="mob-nav-detect" onclick="toggleMobileMenu()"><span class="link-icon">🔬</span> <span data-i18n="nav_detect">Detect Disease</span></a>
+    <a href="/chatbot" class="mobile-nav-link" id="mob-nav-chat" onclick="toggleMobileMenu()"><span class="link-icon">💬</span> <span data-i18n="nav_chat">AI Chatbot</span></a>
+    <a href="/history" class="mobile-nav-link" id="mob-nav-history" onclick="toggleMobileMenu()"><span class="link-icon">📅</span> <span data-i18n="nav_history">History</span></a>
+    <a href="/market" class="mobile-nav-link" id="mob-nav-market" onclick="toggleMobileMenu()"><span class="link-icon">🌾</span> <span data-i18n="nav_market">Mandi & Weather</span></a>
+
+    <div class="drawer-divider"></div>
+
+    {% if current_user %}
+      <a href="/dashboard" class="mobile-nav-link" id="mob-nav-dashboard" onclick="toggleMobileMenu()"><span class="link-icon">📊</span> <span data-i18n="dashboard_welcome">Dashboard</span></a>
+      {% if current_user.role == 'admin' %}
+        <a href="/admin" class="mobile-nav-link" id="mob-nav-admin" style="color:var(--accent);" onclick="toggleMobileMenu()"><span class="link-icon">⚡</span> <span data-i18n="admin_title">Admin</span></a>
+      {% endif %}
+      <div class="drawer-user-info">
+        <span class="drawer-username">👤 {{ current_user.name }}</span>
+        <a href="/logout" class="drawer-logout-btn" data-i18n="nav_logout">Logout</a>
+      </div>
+    {% else %}
+      <a href="/login" class="mobile-nav-link" id="mob-nav-login" onclick="toggleMobileMenu()"><span class="link-icon">🔑</span> <span data-i18n="login_title">Login</span></a>
+      <a href="/register" class="mobile-nav-cta" onclick="toggleMobileMenu()"><span data-i18n="register_button">Register →</span></a>
+    {% endif %}
+  </div>
+</div>
 
 <main>
   {% block content %}{% endblock %}
@@ -65,19 +106,50 @@
 <script>
   // Highlight active nav link
   const path = window.location.pathname;
-  if(path === '/') document.getElementById('nav-home')?.classList.add('active');
-  if(path === '/detect') document.getElementById('nav-detect')?.classList.add('active');
-  if(path === '/chatbot') document.getElementById('nav-chat')?.classList.add('active');
-  if(path === '/history') document.getElementById('nav-history')?.classList.add('active');
-  if(path === '/market') document.getElementById('nav-market')?.classList.add('active');
-  if(path === '/dashboard') document.getElementById('nav-dashboard')?.classList.add('active');
-  if(path === '/admin') document.getElementById('nav-admin')?.classList.add('active');
+  if(path === '/') {
+    document.getElementById('nav-home')?.classList.add('active');
+    document.getElementById('mob-nav-home')?.classList.add('active');
+  }
+  if(path === '/detect') {
+    document.getElementById('nav-detect')?.classList.add('active');
+    document.getElementById('mob-nav-detect')?.classList.add('active');
+  }
+  if(path === '/chatbot') {
+    document.getElementById('nav-chat')?.classList.add('active');
+    document.getElementById('mob-nav-chat')?.classList.add('active');
+  }
+  if(path === '/history') {
+    document.getElementById('nav-history')?.classList.add('active');
+    document.getElementById('mob-nav-history')?.classList.add('active');
+  }
+  if(path === '/market') {
+    document.getElementById('nav-market')?.classList.add('active');
+    document.getElementById('mob-nav-market')?.classList.add('active');
+  }
+  if(path === '/dashboard') {
+    document.getElementById('nav-dashboard')?.classList.add('active');
+    document.getElementById('mob-nav-dashboard')?.classList.add('active');
+  }
+  if(path === '/admin') {
+    document.getElementById('nav-admin')?.classList.add('active');
+    document.getElementById('mob-nav-admin')?.classList.add('active');
+  }
+  if(path === '/login') {
+    document.getElementById('mob-nav-login')?.classList.add('active');
+  }
 
   // Connect toggle button to LanguageManager
   function toggleLanguage() {
     if (typeof LanguageManager !== 'undefined') {
       LanguageManager.toggleLanguage();
     }
+  }
+
+  // Toggle mobile navigation drawer
+  function toggleMobileMenu() {
+    document.getElementById('mobileDrawer')?.classList.toggle('active');
+    document.getElementById('drawerOverlay')?.classList.toggle('active');
+    document.getElementById('nav-hamburger-btn')?.classList.toggle('active');
   }
 </script>
 {% block scripts %}{% endblock %}
