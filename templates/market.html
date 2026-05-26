@@ -24,9 +24,7 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           <span data-i18n="market_weather_select" style="font-size: 0.9rem; color: var(--text-secondary);">Select Region:</span>
           <select id="weatherRegion" onchange="updateWeather()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; outline: none; cursor: pointer; font-weight: 600;">
-            {% for code, data in weather_data.items() %}
-            <option value="{{ code }}">{{ data.city_en }}</option>
-            {% endfor %}
+            <option value="loading" data-i18n="market_weather_select_loading">Loading districts...</option>
           </select>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -34,9 +32,6 @@
           <input
             type="date"
             id="weatherDate"
-            value="2026-05-24"
-            min="2026-05-22"
-            max="2026-05-28"
             onchange="updateWeather()"
             style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; outline: none; cursor: pointer; font-weight: 600; color-scheme: dark;"
           />
@@ -44,58 +39,83 @@
       </div>
     </div>
 
-    <!-- Active Weather Display Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px;">
-      <!-- Current Condition Card -->
-      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px;">
-        <div id="weatherIcon" style="font-size: 4rem; animation: pulse 2s infinite ease-in-out;">☀️</div>
+    <!-- Weather Shimmer Skeletons (Visible during loading) -->
+    <div id="weatherSkeleton" style="display: block;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px;">
+        <div class="skeleton skeleton-card" style="height: 120px; margin: 0;"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="skeleton skeleton-text" style="height: 40px; margin: 0;"></div>
+          <div class="skeleton skeleton-text" style="height: 40px; margin: 0;"></div>
+          <div class="skeleton skeleton-text" style="height: 40px; margin: 0;"></div>
+          <div class="skeleton skeleton-text" style="height: 40px; margin: 0;"></div>
+        </div>
+      </div>
+      <div class="skeleton skeleton-card" style="height: 80px; margin-bottom: 24px;"></div>
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;">
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+        <div class="skeleton skeleton-card" style="height: 80px; margin: 0;"></div>
+      </div>
+    </div>
+
+    <!-- Active Weather Display Grid (Hidden during loading) -->
+    <div id="weatherMainContent" style="display: none;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px;">
+        <!-- Current Condition Card -->
+        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px;">
+          <div id="weatherIcon" style="font-size: 4rem; animation: pulse 2s infinite ease-in-out;">☀️</div>
+          <div>
+            <div id="weatherTemp" style="font-size: 3rem; font-weight: 700; color: var(--text-primary); line-height: 1;">38°C</div>
+            <div id="weatherCondition" style="font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-top: 4px;">Sunny</div>
+          </div>
+        </div>
+
+        <!-- Quick Metrics Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_humidity">Humidity</span>
+            <span id="weatherHumidity" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">45%</span>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_wind">Wind Speed</span>
+            <span id="weatherWind" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">14 km/h</span>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_rain">Rain Probability</span>
+            <span id="weatherRain" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">10%</span>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_condition">Condition</span>
+            <span id="weatherConditionShort" style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">Sunny</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Weather Advisory Alert Box -->
+      <div style="background: rgba(0, 212, 170, 0.06); border: 1px solid rgba(0, 212, 170, 0.2); border-radius: 12px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; transition: all 0.3s ease-in-out;">
+        <div style="font-size: 1.5rem; line-height: 1;">🌱</div>
         <div>
-          <div id="weatherTemp" style="font-size: 3rem; font-weight: 700; color: var(--text-primary); line-height: 1;">38°C</div>
-          <div id="weatherCondition" style="font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-top: 4px;">Sunny</div>
+          <h4 style="margin: 0; font-size: 1rem; color: var(--accent); font-weight: 700;" data-i18n="market_weather_advice">Agri Advisory (ખેતી સલાહ)</h4>
+          <p id="weatherAdvice" style="margin: 6px 0 0 0; font-size: 0.92rem; color: var(--text-primary); line-height: 1.5;">
+            Ideal dry weather. Suitable for harvesting wheat and cumin, or applying fertilizers.
+          </p>
         </div>
       </div>
 
-      <!-- Quick Metrics Grid -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
-          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_humidity">Humidity</span>
-          <span id="weatherHumidity" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">45%</span>
+      <!-- 7-Day Forecast & History Strips -->
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 16px;">
+        {% for i in range(7) %}
+        <div class="forecast-day-card" id="forecast-{{ i }}" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+          <span class="day-label" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Mon</span>
+          <span class="day-icon" style="font-size: 1.75rem;">☀️</span>
+          <span class="day-temp" style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">39°C</span>
         </div>
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
-          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_wind">Wind Speed</span>
-          <span id="weatherWind" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">14 km/h</span>
-        </div>
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
-          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_rain">Rain Probability</span>
-          <span id="weatherRain" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">10%</span>
-        </div>
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
-          <span style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="market_weather_condition">Condition</span>
-          <span id="weatherConditionShort" style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;">Sunny</span>
-        </div>
+        {% endfor %}
       </div>
-    </div>
-
-    <!-- AI Weather Advisory Alert Box -->
-    <div style="background: rgba(0, 212, 170, 0.06); border: 1px solid rgba(0, 212, 170, 0.2); border-radius: 12px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; transition: all 0.3s ease-in-out;">
-      <div style="font-size: 1.5rem; line-height: 1;">🌱</div>
-      <div>
-        <h4 style="margin: 0; font-size: 1rem; color: var(--accent); font-weight: 700;" data-i18n="market_weather_advice">Agri Advisory (ખેતી સલાહ)</h4>
-        <p id="weatherAdvice" style="margin: 6px 0 0 0; font-size: 0.92rem; color: var(--text-primary); line-height: 1.5;">
-          Ideal dry weather. Suitable for harvesting wheat and cumin, or applying fertilizers.
-        </p>
-      </div>
-    </div>
-
-    <!-- 7-Day Forecast & History Strips -->
-    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 16px;">
-      {% for i in range(7) %}
-      <div class="forecast-day-card" id="forecast-{{ i }}" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <span class="day-label" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Mon</span>
-        <span class="day-icon" style="font-size: 1.75rem;">☀️</span>
-        <span class="day-temp" style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">39°C</span>
-      </div>
-      {% endfor %}
     </div>
   </div>
 
@@ -127,9 +147,6 @@
         <input
           type="date"
           id="mandiDate"
-          value="2026-05-24"
-          min="2026-04-25"
-          max="2026-05-24"
           onchange="filterMandi()"
           style="flex: 1; min-width: 140px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; padding: 8px; outline: none; cursor: pointer; font-weight: 600; color-scheme: dark;"
         />
@@ -144,8 +161,19 @@
       </div>
     </div>
 
-    <!-- Live Rates Table -->
-    <div class="dash-table-wrapper" style="box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 12px; overflow: hidden;">
+    <!-- Mandi Shimmer Skeletons (Visible during loading) -->
+    <div id="mandiSkeleton" style="display: block; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px;">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-text" style="height: 35px; margin: 10px 0;"></div>
+      <div class="skeleton skeleton-text" style="height: 35px; margin: 10px 0;"></div>
+      <div class="skeleton skeleton-text" style="height: 35px; margin: 10px 0;"></div>
+      <div class="skeleton skeleton-text" style="height: 35px; margin: 10px 0;"></div>
+      <div class="skeleton skeleton-text" style="height: 35px; margin: 10px 0;"></div>
+      <div class="skeleton skeleton-text" style="height: 35px; margin: 10px 0;"></div>
+    </div>
+
+    <!-- Live Rates Table (Hidden during loading) -->
+    <div class="dash-table-wrapper" id="mandiTableContainer" style="box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 12px; overflow: hidden; display: none;">
       <table class="dash-table" id="mandiTable">
         <thead>
           <tr>
@@ -158,7 +186,7 @@
           </tr>
         </thead>
         <tbody id="mandiTableBody">
-          <!-- Populated dynamically via JS to support real-time transitions and clean rendering -->
+          <!-- Populated dynamically via JS -->
         </tbody>
       </table>
       <div id="mandiEmptyState" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
@@ -173,11 +201,73 @@
 
 {% block scripts %}
 <script>
-  // Weather Forecast full dataset
-  const weatherData = {{ weather_data | tojson }};
+  // ── Dynamic Date Helpers ──────────────────────────────────────
+  function toISODate(d) {
+    // Convert a Date object to 'YYYY-MM-DD' string in local timezone
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
-  // APMC Mandi rates full dataset
-  const mandiPrices = {{ mandi_prices | tojson }};
+  const _now = new Date();
+  const todayStr = toISODate(_now);
+
+  // Dynamically populated async datasets
+  let weatherData = null;
+  let mandiPrices = [];
+  let currentMandiDate = "";
+
+  // Fetch all dashboard data asynchronously with shimmer skeletons
+  async function loadDashboardData() {
+    try {
+      // Parallel API calls using Promise.all (mandi defaults to today on server)
+      const [weatherRes, mandiRes] = await Promise.all([
+        fetch('/api/weather'),
+        fetch(`/api/mandi?date=${todayStr}`)
+      ]);
+
+      weatherData = await weatherRes.json();
+      mandiPrices = await mandiRes.json();
+      currentMandiDate = todayStr;
+
+      // Populate select menus and options
+      populateWeatherDropdown();
+      populateFilters();
+
+      // Hide skeletons, display real contents
+      document.getElementById('weatherSkeleton').style.display = 'none';
+      document.getElementById('weatherMainContent').style.display = 'block';
+      document.getElementById('mandiSkeleton').style.display = 'none';
+      document.getElementById('mandiTableContainer').style.display = 'block';
+
+      // Render initial values
+      updateWeather();
+      filterMandi();
+
+    } catch (e) {
+      console.error("Dashboard load failed: ", e);
+      document.getElementById('weatherSkeleton').innerHTML = '<p style="color:#fca5a5; text-align:center; padding: 2rem;">⚠️ Failed to load Weather forecast. Please refresh.</p>';
+      document.getElementById('mandiSkeleton').innerHTML = '<p style="color:#fca5a5; text-align:center; padding: 2rem;">⚠️ Failed to load APMC Mandi rates. Please refresh.</p>';
+    }
+  }
+
+  // Populate Weather District Dropdown
+  function populateWeatherDropdown() {
+    const weatherSelect = document.getElementById('weatherRegion');
+    if (!weatherSelect || !weatherData) return;
+    weatherSelect.innerHTML = '';
+    const lang = getCurrentLanguage();
+    const isGu = lang === 'gu';
+
+    Object.keys(weatherData).forEach(code => {
+      const option = document.createElement('option');
+      option.value = code;
+      option.textContent = isGu ? weatherData[code].city_gu : weatherData[code].city_en;
+      weatherSelect.appendChild(option);
+    });
+  }
 
   // Formatting numbers/digits dynamically depending on language (adds Gujarati numerals!)
   function translateNumber(val, lang) {
@@ -188,25 +278,27 @@
     return numString.replace(/[0-9]/g, w => guDigits[+w]);
   }
 
-  // Format date strings beautifully for English and Gujarati
+  // Format date strings beautifully for English and Gujarati (all 12 months)
   function formatMandiDate(dateString, lang) {
-    const parts = dateString.split('-'); // ["2026", "05", "24"]
+    const parts = dateString.split('-');
     if (parts.length !== 3) return dateString;
     const day = parseInt(parts[2]);
     const year = parseInt(parts[0]);
+    const monthNum = parseInt(parts[1]);
     if (lang === 'gu') {
-      const monthsGu = {5: 'મે'};
-      const month = monthsGu[parseInt(parts[1])] || parts[1];
+      const monthsGu = {1:'જાન્યુઆરી',2:'ફેબ્રુઆરી',3:'માર્ચ',4:'એપ્રિલ',5:'મે',6:'જૂન',7:'જુલાઈ',8:'ઑગસ્ટ',9:'સપ્ટેમ્બર',10:'ઑક્ટોબર',11:'નવેમ્બર',12:'ડિસેમ્બર'};
+      const month = monthsGu[monthNum] || parts[1];
       return `${translateNumber(day, 'gu')} ${month}, ${translateNumber(year, 'gu')}`;
     } else {
-      const monthsEn = {5: 'May'};
-      const month = monthsEn[parseInt(parts[1])] || parts[1];
+      const monthsEn = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
+      const month = monthsEn[monthNum] || parts[1];
       return `${month} ${day}, ${year}`;
     }
   }
 
   // Populate dynamic select filter lists (Crops and Markets)
   function populateFilters() {
+    if (!mandiPrices) return;
     const crops = new Set();
     const markets = new Set();
 
@@ -222,7 +314,6 @@
     const lang = getCurrentLanguage();
     const isGu = lang === 'gu';
 
-    // Clear existing options before populating to prevent duplicate items from multiple DOMContentLoaded hooks
     cropSelect.innerHTML = `<option value="all">${translations[lang]['market_mandi_filter_all_crops'] || 'All Crops'}</option>`;
     marketSelect.innerHTML = `<option value="all">${translations[lang]['market_mandi_filter_all_markets'] || 'All Markets'}</option>`;
 
@@ -252,6 +343,7 @@
   }
 
   function updateWeather() {
+    if (!weatherData) return;
     const region = document.getElementById('weatherRegion').value;
     const w = weatherData[region];
     if (!w) return;
@@ -282,7 +374,7 @@
     document.getElementById('weatherRain').textContent = `${translateNumber(activeDay.rain_prob, lang)}%`;
     document.getElementById('weatherAdvice').textContent = isGu ? activeDay.advice_gu : activeDay.advice_en;
 
-    // Load 5-day forecast strip
+    // Load 7-day forecast strip
     w.forecast.forEach((f, idx) => {
       const fCard = document.getElementById(`forecast-${idx}`);
       if (fCard) {
@@ -385,14 +477,34 @@
   }
 
   // Filter Mandi rates dynamically including Search, Crop, APMC and Date calendar input
-  function filterMandi() {
+  async function filterMandi() {
+    if (!mandiPrices) return;
     const search = document.getElementById('mandiSearch').value.toLowerCase().trim();
     const crop = document.getElementById('mandiCropFilter').value;
     const market = document.getElementById('mandiMarketFilter').value;
     let dateVal = document.getElementById('mandiDate').value;
     if (!dateVal) {
-      dateVal = "2026-05-24";
-      document.getElementById('mandiDate').value = "2026-05-24";
+      dateVal = todayStr;
+      document.getElementById('mandiDate').value = todayStr;
+    }
+
+    // Dynamic background fetch if selected date has changed
+    if (currentMandiDate !== dateVal) {
+      // Show skeleton during background load
+      document.getElementById('mandiSkeleton').style.display = 'block';
+      document.getElementById('mandiTableContainer').style.display = 'none';
+      
+      try {
+        const res = await fetch(`/api/mandi?date=${dateVal}`);
+        mandiPrices = await res.json();
+        currentMandiDate = dateVal;
+        populateFilters();
+      } catch (e) {
+        console.error("Failed to load Mandi data for date: " + dateVal, e);
+      }
+      
+      document.getElementById('mandiSkeleton').style.display = 'none';
+      document.getElementById('mandiTableContainer').style.display = 'block';
     }
 
     const lang = getCurrentLanguage();
@@ -418,47 +530,49 @@
     renderMandiTable(filtered);
   }
 
-  // Seamless translation updates upon language switches
-  const originalApplyLanguage = LanguageManager.applyLanguage;
-  LanguageManager.applyLanguage = function(lang) {
-    originalApplyLanguage.call(LanguageManager, lang);
+  // Seamless translation updates upon language switches (registered after DOM loads to prevent ReferenceError)
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof LanguageManager !== 'undefined') {
+      const originalApplyLanguage = LanguageManager.applyLanguage;
+      LanguageManager.applyLanguage = function(lang) {
+        originalApplyLanguage.call(LanguageManager, lang);
 
-    // Refresh weather details in selected language
-    updateWeather();
+        // Refresh weather details in selected language
+        updateWeather();
 
-    // Repopulate Mandi select options (keeping selected values)
-    const cropSelect = document.getElementById('mandiCropFilter');
-    const marketSelect = document.getElementById('mandiMarketFilter');
+        // Repopulate Mandi select options (keeping selected values)
+        const cropSelect = document.getElementById('mandiCropFilter');
+        const marketSelect = document.getElementById('mandiMarketFilter');
 
-    const selectedCrop = cropSelect.value;
-    const selectedMarket = marketSelect.value;
+        const selectedCrop = cropSelect.value;
+        const selectedMarket = marketSelect.value;
 
-    populateFilters();
+        populateFilters();
 
-    cropSelect.value = selectedCrop;
-    marketSelect.value = selectedMarket;
+        cropSelect.value = selectedCrop;
+        marketSelect.value = selectedMarket;
 
-    filterMandi();
-  };
+        filterMandi();
+      };
+    }
+  });
 
   // Initialize page components
   document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize Weather Date Calendar Range (Past 2 days to Day 5 forecast)
+    // 1. Initialize Weather Date Calendar Range (today-2 to today+4)
     const weatherDateInput = document.getElementById('weatherDate');
-    weatherDateInput.min = "2026-05-22";
-    weatherDateInput.max = "2026-05-28";
-    weatherDateInput.value = "2026-05-24";
+    weatherDateInput.min = toISODate(addDays(_now, -2));
+    weatherDateInput.max = toISODate(addDays(_now, 4));
+    weatherDateInput.value = todayStr;
 
-    // 2. Initialize Mandi Date Calendar Range (Past 30 days to Today)
+    // 2. Initialize Mandi Date Calendar Range (today-30 to today)
     const mandiDateInput = document.getElementById('mandiDate');
-    mandiDateInput.min = "2026-04-25";
-    mandiDateInput.max = "2026-05-24";
-    mandiDateInput.value = "2026-05-24";
+    mandiDateInput.min = toISODate(addDays(_now, -30));
+    mandiDateInput.max = todayStr;
+    mandiDateInput.value = todayStr;
 
-    // 3. Populate filters and render initial states
-    populateFilters();
-    updateWeather();
-    filterMandi();
+    // 3. Load dashboard asynchronously in the background
+    loadDashboardData();
   });
 </script>
 

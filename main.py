@@ -6,7 +6,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
 from database.db import engine, Base
-from routers import detection, chatbot, history, auth, market
+from starlette.middleware.gzip import GZipMiddleware
+from routers import detection, chatbot, history, auth, market, weather, mandi
 from services.auth_service import get_current_user
 from database.db import SessionLocal
 import os
@@ -35,9 +36,21 @@ app.add_middleware(
 )
 
 app.add_middleware(
+    GZipMiddleware,
+    minimum_size=1000
+)
+
+app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "agrismart-jwt-secret-change-this-in-production-2026")
 )
+
+@app.middleware("http")
+async def add_cache_control_header(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "public, max-age=31536000"
+    return response
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -48,6 +61,8 @@ app.include_router(chatbot.router)
 app.include_router(history.router)
 app.include_router(auth.router)
 app.include_router(market.router)
+app.include_router(weather.router)
+app.include_router(mandi.router)
 
 
 # ─── Helper: get current user for page templates ─────────────────────────────

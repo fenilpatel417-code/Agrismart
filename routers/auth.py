@@ -250,7 +250,11 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════════════════════
 
 @router.get("/admin", response_class=HTMLResponse)
-async def admin_panel(request: Request, db: Session = Depends(get_db)):
+async def admin_panel(
+    request: Request,
+    page: int = 1,
+    db: Session = Depends(get_db)
+):
     """Admin panel. Requires role='admin'."""
     user = get_current_user(request, db)
     if not user:
@@ -259,8 +263,8 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse("403.html", {"request": request, "current_user": user}, status_code=403)
 
     # Stats
-    total_users = db.query(func.count(User.id)).scalar()
-    total_scans = db.query(func.count(ScanHistory.id)).scalar()
+    total_users = db.query(func.count(User.id)).scalar() or 0
+    total_scans = db.query(func.count(ScanHistory.id)).scalar() or 0
 
     # All users with their scan counts
     users = db.query(User).order_by(User.created_at.desc()).all()
@@ -270,13 +274,24 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
                       .group_by(ScanHistory.user_id).all()
     }
 
-    # Recent 10 scans across all users
-    recent_scans = (
-        db.query(ScanHistory)
-        .order_by(ScanHistory.created_at.desc())
-        .limit(50)
-        .all()
-    )
+    # Paginate recent scans: max 100 scans, 20 items per page
+    limit = 20
+    offset = (max(1, page) - 1) * limit
+    
+    total_admin_scans = min(100, total_scans)
+    total_pages = (total_admin_scans + limit - 1) // limit
+
+    if offset >= 100:
+        recent_scans = []
+    else:
+        current_limit = min(limit, 100 - offset)
+        recent_scans = (
+            db.query(ScanHistory)
+            .order_by(ScanHistory.created_at.desc())
+            .offset(offset)
+            .limit(current_limit)
+            .all()
+        )
 
     return templates.TemplateResponse("admin.html", {
         "request"        : request,
@@ -286,6 +301,8 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         "users"          : users,
         "user_scan_counts": user_scan_counts,
         "recent_scans"   : recent_scans,
+        "page"           : page,
+        "total_pages"    : total_pages,
     })
 
 

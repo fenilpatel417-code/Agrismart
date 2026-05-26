@@ -72,7 +72,7 @@
 
   <!-- Preview -->
   <div class="preview-container" id="previewContainer" style="display:none; margin-top:1rem">
-    <img id="previewImg" class="preview-img" alt="Crop preview" />
+    <img id="previewImg" class="preview-img" alt="Crop preview" loading="lazy" width="300" height="200" />
     <button class="change-btn" onclick="resetUpload()">✕ Change</button>
   </div>
 
@@ -196,6 +196,33 @@ async function analyzeImage() {
   document.getElementById('resultBox').style.display = 'none';
   document.getElementById('errorBox').style.display = 'none';
 
+  // ── Cycle progress messages every 3 seconds ──
+  const messagesEn = [
+    "Uploading your crop image...",
+    "AI is analyzing the image...",
+    "Detecting diseases and symptoms...",
+    "Generating treatment plan...",
+    "Almost done..."
+  ];
+  const messagesGu = [
+    "તમારી પાક છબી અપલોડ થઈ રહી છે...",
+    "AI છબીનું વિશ્લેષણ કરી રહ્યો છે...",
+    "રોગ અને લક્ષણો શોધી રહ્યો છે...",
+    "સારવાર યોજના તૈયાર કરી રહ્યો છે...",
+    "લગભગ પૂર્ણ..."
+  ];
+
+  const activeMsgs = getCurrentLanguage() === 'gu' ? messagesGu : messagesEn;
+  const loadTextEl = document.querySelector('#loadingBox .loading-text');
+  
+  let msgIdx = 0;
+  loadTextEl.innerHTML = `🤖 ${activeMsgs[0]}<br><small style="color:var(--text-muted)">This may take 5–10 seconds</small>`;
+
+  const progressInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % activeMsgs.length;
+    loadTextEl.innerHTML = `🤖 ${activeMsgs[msgIdx]}<br><small style="color:var(--text-muted)">This may take 5–10 seconds</small>`;
+  }, 3000);
+
   try {
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -205,6 +232,7 @@ async function analyzeImage() {
     const res = await fetch('/api/detect', { method: 'POST', body: formData });
     const data = await res.json();
 
+    clearInterval(progressInterval);
     document.getElementById('loadingBox').style.display = 'none';
 
     if (data.success) {
@@ -244,6 +272,7 @@ async function analyzeImage() {
       showError(data.error || 'Analysis failed. Please try again.');
     }
   } catch (err) {
+    clearInterval(progressInterval);
     document.getElementById('loadingBox').style.display = 'none';
     showError('Connection error. Please check your internet and try again.');
   }

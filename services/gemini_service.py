@@ -4,40 +4,51 @@ import PIL.Image
 import io
 import os
 import asyncio
+import hashlib
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
+# ─── Simple In-Memory Crop Analysis Cache ─────────────────────────────────────
+_cache = {}
+CACHE_DURATION = 86400  # 24 hours in seconds
+
+def get_cache_key(image_bytes: bytes, analysis_type: str, language: str = "en") -> str:
+    hash_val = hashlib.md5(image_bytes).hexdigest()
+    return f"{hash_val}_{analysis_type}_{language}"
+
+def get_cached_result(key: str):
+    if key in _cache:
+        result, timestamp = _cache[key]
+        if time.time() - timestamp < CACHE_DURATION:
+            return result
+        else:
+            del _cache[key]
+    return None
+
+def set_cache(key: str, result):
+    _cache[key] = (result, time.time())
+
+
 SYSTEM_CONTEXT = """You are an expert agricultural scientist specializing in crops grown in Gujarat, India. You have deep knowledge of:
+KHARIF CROPS: Cotton, Groundnut, Bajra, Soybean, Castor, Tobacco, Rice, Maize, Moong, Tur Dal
+RABI CROPS: Wheat, Cumin (Jeera), Garlic, Onion, Fennel (Saunf), Potato, Coriander, Mustard
+ZAID CROPS: Watermelon, Cucumber, Moong, Vegetables
 
-KHARIF CROPS (June–October): Cotton, Groundnut, Bajra, Soybean, Castor, Tobacco, Rice, Maize, Moong, Tur Dal
-RABI CROPS (October–March): Wheat, Cumin (Jeera), Garlic, Onion, Fennel (Saunf), Potato, Coriander, Mustard
-ZAID CROPS (March–June): Watermelon, Cucumber, Moong, Vegetables
-
-For each crop you know:
-- Exact leaf shape, color, texture, stem structure
-- How healthy vs diseased leaves look visually
-- Gujarat-specific diseases, pests, and deficiencies
-- Local climate (semi-arid, black cotton soil, sandy loam)
-- Gujarati and Hindi names of crops and diseases
-
-When analyzing an image:
-1. First identify the crop species with confidence percentage
-2. Check for ANY visible symptoms: spots, discoloration, wilting, holes, lesions, mold, pest damage, yellowing, curling
-3. If disease found — name it scientifically AND in common Gujarati/Hindi
-4. Give advice specific to Gujarat's climate and available local pesticides
+For each crop you know leaf shapes, stems, health visual states, Gujarat-specific diseases, pests, local semi-arid soil conditions, and common names in Gujarati/Hindi.
+When analyzing: identify crop species, identify disease if present, name it scientifically and in Gujarati/Hindi, and give local climate advice.
 """
 
+# Streamlined concise prompts (all under 200 words)
 PROMPTS = {
     "disease": SYSTEM_CONTEXT + """
-Examine the crop image carefully (entire image including leaf surface, edges, stem, color) to detect diseases.
-Look specifically for: fungal spots, bacterial lesions, viral mosaic patterns, pest damage holes, nutrient deficiency yellowing/browning.
-
+Examine the crop image to detect diseases.
 Respond in this EXACT format:
 
 🌿 PLANT IDENTIFIED: [name]
-🦠 DISEASE STATUS: [Healthy OR specific disease name (Give name in: English + Scientific name + Gujarati/Hindi name)]
+🦠 DISEASE STATUS: [Healthy OR disease name (English + Scientific name + Gujarati/Hindi name)]
 ⚠️ SEVERITY: [Mild (0-30%) / Moderate (30-60%) / Severe (60-100%)]
 📊 CONFIDENCE: [High (85-100%) / Medium (60-84%) / Low (below 60%)]
 
@@ -46,11 +57,11 @@ Respond in this EXACT format:
 • [symptom 2]
 
 🔬 ROOT CAUSE:
-[1-2 sentences. Mention if it looks like a Gujarat-common disease for that crop based on soil and climate.]
+[1-2 sentences. Mention if common in Gujarat based on soil/climate.]
 
 💊 TREATMENT PLAN:
-Chemical: [options available in Gujarat market]
-Organic: [natural/organic remedy options]
+Chemical: [options available in Gujarat]
+Organic: [natural/organic remedies]
 
 🛡️ PREVENTION:
 • [tip 1]
@@ -59,21 +70,20 @@ Organic: [natural/organic remedy options]
 ⏰ URGENCY: [Act Now / Monitor Weekly / No Action Needed]
 
 Special Instruction: If healthy, say clearly "No disease detected, plant looks healthy" in DISEASE STATUS.
-If not a plant image, output: "❌ No plant detected. Please upload a clear crop photo." """,
+If not a plant: "❌ No plant detected. Please upload a clear crop photo." """,
 
     "identify": SYSTEM_CONTEXT + """
-Study the leaf shape, venation pattern, color, texture, stem, and any fruits/flowers to identify this plant/crop.
-
+Study leaf shape, venation, colors, stems to identify this crop.
 Respond in this EXACT format:
 
 🌿 PLANT IDENTIFIED: [Common name (Scientific name)]
-🦠 DISEASE STATUS: [Healthy OR Any visible health issue]
+🦠 DISEASE STATUS: [Healthy OR visible health issue]
 ⚠️ SEVERITY: [None / Mild / Moderate / Severe]
 📊 CONFIDENCE: [High (85-100%) / Medium (60-84%) / Low (below 60%)]
 
 📋 CROP DETAILS:
 • Gujarati Name: [Name in Gujarati script and phonetic English]
-• Main Growing Districts: [prominent Gujarat districts for this crop]
+• Main Growing Districts: [Gujarat districts]
 • Cultivation Season: [Kharif / Rabi / Zaid crop class]
 
 📋 TOP 3 POSSIBLE MATCHES:
@@ -85,7 +95,7 @@ Respond in this EXACT format:
 [2-3 sentences overview]
 
 🌱 GROWING CONDITIONS:
-• Soil: [Gujarat suited soil like black cotton / sandy loam]
+• Soil: [Gujarat suited soil black cotton / sandy loam]
 • Temperature: [Ideal range]
 • Sunlight: [Requirements]
 • Water: [Schedule and frequency]
@@ -101,8 +111,7 @@ Respond in this EXACT format:
 If not a plant: "❌ No plant detected. Please upload a clear crop photo." """,
 
     "growth": SYSTEM_CONTEXT + """
-Analyze this crop image to assess its growth stage and health, and provide customized growth optimization tips.
-
+Analyze crop growth stage and health, and provide growth optimization tips.
 Respond in this EXACT format:
 
 🌿 PLANT IDENTIFIED: [name]
@@ -111,11 +120,11 @@ Respond in this EXACT format:
 📊 CONFIDENCE: [High (85-100%) / Medium (60-84%) / Low (below 60%)]
 
 📈 CURRENT GROWTH STAGE & HEALTH:
-• Estimated Stage: [Seedling / Vegetative / Flowering / Fruiting / Mature based on image]
+• Estimated Stage: [Seedling / Vegetative / Flowering / Fruiting / Mature]
 • Health Status: [Excellent / Good / Fair / Poor]
 
 🚀 TOP 5 TIPS TO GROW FASTER IN GUJARAT:
-1. [Tip tailored to Gujarat soil like black cotton/sandy loam and local seasonal conditions]
+1. [Tip tailored to Gujarat soil and seasonal conditions]
 2. [Tip]
 3. [Tip]
 4. [Tip]
@@ -123,28 +132,27 @@ Respond in this EXACT format:
 
 🧪 FERTILIZER RECOMMENDATIONS:
 • NPK Ratio: [crop-specific ratio]
-• Local Brands: [brands available in Gujarat like IFFCO / KRIBHCO]
+• Local Brands: [brands in Gujarat like IFFCO / KRIBHCO]
 • Application: [how and when to apply]
 
 💧 WATER & IRRIGATION:
-[Watering schedule adjusted for Gujarat's semi-arid/hot climate and soil type]
+[Watering schedule adjusted for Gujarat soil type]
 
 ☀️ SUNLIGHT & SPACING:
-[Sunlight requirements and ideal spacing in fields]
+[Sunlight requirements and spacing in fields]
 
 📅 HARVEST OPTIMIZATION:
 • Expected harvest: [timeframe]
-• Signs of readiness: [what visual clues to look for]
+• Signs of readiness: [visual clues]
 
-If not a plant: "❌ No plant detected. Please upload a clear crop photo." """,
+If not a plant: "❌ No plant detected. Please upload a crop photo." """,
 
     "treatment": SYSTEM_CONTEXT + """
-Analyze this crop image and provide a comprehensive, step-by-step treatment plan.
-
+Analyze crop and provide a step-by-step treatment plan.
 Respond in this EXACT format:
 
 🌿 PLANT IDENTIFIED: [name]
-🦠 DISEASE STATUS: [Healthy OR specific disease/pest/deficiency detected]
+🦠 DISEASE STATUS: [Healthy OR specific disease/pest/deficiency]
 ⚠️ SEVERITY: [Mild (0-30%) / Moderate (30-60%) / Severe (60-100%)]
 📊 CONFIDENCE: [High (85-100%) / Medium (60-84%) / Low (below 60%)]
 
@@ -154,15 +162,15 @@ Step 2: [Action]
 Step 3: [Action]
 
 🧴 CHEMICAL TREATMENTS (GUJARAT MARKET):
-• Product: [Pesticide/fungicide names available in Gujarat] — Dosage: [clear dosage] — Frequency: [frequency]
+• Product: [Pesticides available in Gujarat] — Dosage: [dosage] — Frequency: [frequency]
 
 🌿 ORGANIC/NATURAL TREATMENTS:
 • [Organic remedy 1]
 • [Organic remedy 2]
 
 ⚠️ RECOVERY & TREATING STAGES:
-• Recoverable: [Explain when this is still treatable]
-• Too Late to Treat: [Explain when it is too far gone]
+• Recoverable: [Explain when treatable]
+• Too Late to Treat: [Explain when too far gone]
 
 🛡️ SAFETY PRECAUTIONS:
 • [safety precaution 1]
@@ -170,27 +178,26 @@ Step 3: [Action]
 
 📅 RECOVERY TIMELINE: [Expected days to recover]
 
-If not a plant: "❌ No plant detected. Please upload a clear crop photo." """,
+If not a plant: "❌ No plant detected. Please upload a crop photo." """,
 
     "fertilizer": SYSTEM_CONTEXT + """
-Analyze this crop and recommend a customized fertilizer plan.
-
+Analyze crop and recommend a customized fertilizer plan.
 Respond in this EXACT format:
 
 🌿 PLANT IDENTIFIED: [name]
-🦠 DISEASE STATUS: [Healthy OR Specific status]
+🦠 DISEASE STATUS: [Healthy OR specific status]
 ⚠️ SEVERITY: [None / Mild / Moderate / Severe]
 📊 CONFIDENCE: [High (85-100%) / Medium (60-84%) / Low (below 60%)]
 
 🌱 ESTIMATED GROWTH STAGE: [Seedling / Vegetative / Flowering / Fruiting / Mature]
 
 🧪 RECOMMENDED FERTILIZERS (NPK RATIO):
-• Target NPK Ratio: [Specify target NPK ratio for this identified crop]
+• Target NPK Ratio: [Specify target NPK ratio]
 • Gujarat Available Products: [IFFCO NPK, DAP, Urea, KRIBHCO NPK, etc.]
 • Application Rate: [dosage per acre or plant]
 
 🧪 MICRONUTRIENT ADVICE:
-• [Micronutrient, e.g., Zinc / Boron (deficiency highly common in Gujarat)] - [why and how to apply]
+• [Micronutrient, Zinc / Boron] - [why and how to apply]
 
 📅 FERTILIZER SCHEDULE:
 • Days 1-15 (Sowing): [what to apply]
@@ -204,9 +211,9 @@ Respond in this EXACT format:
 • [common over-fertilization mistake 1]
 • [common mistake 2]
 
-💡 PRO TIP: [One expert soil/nutrient tip for Gujarat soils]
+💡 PRO TIP: [One expert soil tip for Gujarat soils]
 
-If not a plant: "❌ No plant detected. Please upload a clear crop photo." """
+If not a plant: "❌ No plant detected. Please upload a crop photo." """
 }
 
 ANALYSIS_LABELS = {
@@ -224,14 +231,14 @@ If asked about non-agricultural topics, politely redirect to farming/plant topic
 
 
 def _precheck_image(client, image) -> dict:
-    precheck_prompt = """Look at this image. Analyze its quality and subject. Respond in this EXACT format:
+    precheck_prompt = """Look at this image. Respond in this EXACT format:
 Q1: [yes/no]
 Q2: [yes/no]
 Q3: [leaf/stem/fruit/full plant/unclear]
 
-Questions to answer:
+Questions:
 1. Is this a clear photo of a plant/crop? (yes/no)
-2. Is the image blurry or too dark to analyze? (yes/no)  
+2. Is the image blurry or too dark? (yes/no)  
 3. What part of the plant is visible? (leaf/stem/fruit/full plant/unclear)
 """
     try:
@@ -258,8 +265,7 @@ Questions to answer:
             return {"success": False, "error": "Image is too blurry or dark. Please take a clearer photo in good lighting."}
             
         return {"success": True}
-    except Exception as e:
-        # If pre-check fails (e.g. rate limits), fail-open to let the main request attempt analysis
+    except Exception:
         return {"success": True}
 
 
@@ -269,6 +275,16 @@ def _analyze_sync(image_bytes: bytes, analysis_type: str, language: str = "en") 
             "success": False,
             "error": "⚙️ Gemini API key not configured. Please add your free API key to the .env file. Get one at https://aistudio.google.com"
         }
+    
+    # ── Check Cache First ──
+    cache_key = get_cache_key(image_bytes, analysis_type, language)
+    cached = get_cached_result(cache_key)
+    if cached:
+        print(f"[CACHE HIT] Returning cached crop analysis for type: {analysis_type}, lang: {language}")
+        return cached
+        
+    print(f"[CACHE MISS] Fetching fresh crop analysis from Gemini for type: {analysis_type}, lang: {language}")
+    
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
         image = PIL.Image.open(io.BytesIO(image_bytes))
@@ -302,7 +318,8 @@ CRITICAL LANGUAGE INSTRUCTION (IMPORTANT):
 
         response = client.models.generate_content(
             model="models/gemini-2.5-flash",
-            contents=[prompt, image]
+            contents=[prompt, image],
+            config=types.GenerateContentConfig(max_output_tokens=600)
         )
         result_text = response.text
 
@@ -326,7 +343,7 @@ CRITICAL LANGUAGE INSTRUCTION (IMPORTANT):
         if "low" in confidence_score.lower():
             confidence_warning = "Low confidence — please upload a clearer or closer photo of the affected area"
 
-        return {
+        res_dict = {
             "success": True,
             "result": result_text,
             "analysis_type": analysis_type,
@@ -338,6 +355,11 @@ CRITICAL LANGUAGE INSTRUCTION (IMPORTANT):
             "confidence_score": confidence_score,
             "confidence_warning": confidence_warning
         }
+        
+        # Set cache
+        set_cache(cache_key, res_dict)
+        return res_dict
+        
     except Exception as e:
         return {"success": False, "error": f"AI analysis failed: {str(e)}"}
 
@@ -354,7 +376,13 @@ def _extract_field(text: str, keys: list) -> str:
 
 
 async def analyze_image(image_bytes: bytes, analysis_type: str, language: str = "en") -> dict:
-    return await asyncio.to_thread(_analyze_sync, image_bytes, analysis_type, language)
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(_analyze_sync, image_bytes, analysis_type, language),
+            timeout=30.0
+        )
+    except asyncio.TimeoutError:
+        return {"success": False, "error": "AI analysis timed out after 30 seconds. Please try again."}
 
 
 def _chat_sync(message: str, history: list, language: str = "en") -> str:
@@ -374,7 +402,10 @@ def _chat_sync(message: str, history: list, language: str = "en") -> str:
 
         chat = client.chats.create(
             model="models/gemini-2.5-flash",
-            config=types.GenerateContentConfig(system_instruction=system_instruction),
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                max_output_tokens=400
+            ),
             history=chat_history
         )
         response = chat.send_message(message)
@@ -384,4 +415,10 @@ def _chat_sync(message: str, history: list, language: str = "en") -> str:
 
 
 async def chat_with_agribot(message: str, history: list, language: str = "en") -> str:
-    return await asyncio.to_thread(_chat_sync, message, history, language)
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(_chat_sync, message, history, language),
+            timeout=30.0
+        )
+    except asyncio.TimeoutError:
+        return "⚠️ Response timed out. Please try again."

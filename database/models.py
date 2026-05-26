@@ -38,3 +38,9 @@ class ScanHistory(Base):
     # Foreign key to User — nullable so existing scans are preserved
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     user    = relationship("User", back_populates="scans")
+
+
+from sqlalchemy import Index
+Index('idx_scan_user_id', ScanHistory.user_id)
+Index('idx_scan_created_at', ScanHistory.created_at)
+Index('idx_user_email', User.email)

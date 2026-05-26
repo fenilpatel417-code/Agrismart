@@ -167,6 +167,27 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Controls -->
+    {% if total_pages > 1 %}
+    <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+      {% if page > 1 %}
+        <a href="/admin?page={{ page - 1 }}" class="admin-tab" style="text-decoration: none;">&larr; Previous</a>
+      {% else %}
+        <span class="admin-tab" style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">&larr; Previous</span>
+      {% endif %}
+      
+      <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        Page {{ page }} of {{ total_pages }}
+      </span>
+      
+      {% if page < total_pages %}
+        <a href="/admin?page={{ page + 1 }}" class="admin-tab" style="text-decoration: none;">Next &rarr;</a>
+      {% else %}
+        <span class="admin-tab" style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">Next &rarr;</span>
+      {% endif %}
+    </div>
+    {% endif %}
     {% else %}
     <div class="dash-empty">
       <div class="empty-icon">🔬</div>

@@ -24,18 +24,29 @@ def get_history(
     limit  : int     = Query(default=20, le=100),
     db     : Session = Depends(get_db),
 ):
-    """Return scan history. Filters by user unless admin."""
+    """Return scan history. Filters by user unless admin. Capped at 50 for regular users, 100 for admin."""
     current_user = get_current_user(request, db)
     if not current_user:
         return JSONResponse(status_code=401, content={"success": False, "error": "Login required."})
 
-    query = db.query(ScanHistory)
+    from sqlalchemy import desc
 
-    # Admins see all; regular users see only their own
-    if current_user.role != "admin":
-        query = query.filter(ScanHistory.user_id == current_user.id)
+    # Specific column projection to make the query extremely fast
+    query = db.query(
+        ScanHistory.id,
+        ScanHistory.analysis_type,
+        ScanHistory.crop_name,
+        ScanHistory.disease_name,
+        ScanHistory.severity,
+        ScanHistory.result_summary,
+        ScanHistory.full_result,
+        ScanHistory.created_at
+    )
 
-    scans = query.order_by(ScanHistory.created_at.desc()).limit(limit).all()
+    if current_user.role == "admin":
+        scans = query.order_by(desc(ScanHistory.created_at)).limit(100).all()
+    else:
+        scans = query.filter(ScanHistory.user_id == current_user.id).order_by(desc(ScanHistory.created_at)).limit(50).all()
 
     return JSONResponse(content={
         "success": True,

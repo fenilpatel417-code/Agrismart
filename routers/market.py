@@ -245,15 +245,24 @@ def get_crops_for_apmc(apmc_name):
 
 def generate_weather_for_district(dist_id, dist_en, dist_gu):
     """Programmatically seeds weather cards and forecasts for all 33 districts of Gujarat including past history."""
-    forecast_days = [
-        ("2026-05-22", "Day Before Yesterday", "પરમદિવસે"),
-        ("2026-05-23", "Yesterday", "ગઈકાલે"),
-        ("2026-05-24", "Today", "આજે"),
-        ("2026-05-25", "Tomorrow", "આવતીકાલે"),
-        ("2026-05-26", "Day 3", "દિવસ ૩"),
-        ("2026-05-27", "Day 4", "દિવસ ૪"),
-        ("2026-05-28", "Day 5", "દિવસ ૫")
+    import datetime
+    today = datetime.date.today()
+    
+    # Dynamic day labels for a 7-day window centered on today (today-2 to today+4)
+    day_labels = [
+        ("Day Before Yesterday", "પરમદિવસે"),
+        ("Yesterday", "ગઈકાલે"),
+        ("Today", "આજે"),
+        ("Tomorrow", "આવતીકાલે"),
+        ("Day 3", "દિવસ ૩"),
+        ("Day 4", "દિવસ ૪"),
+        ("Day 5", "દિવસ ૫")
     ]
+    
+    forecast_days = []
+    for i, (label_en, label_gu) in enumerate(day_labels):
+        d = today + datetime.timedelta(days=i - 2)  # -2 to +4
+        forecast_days.append((d.isoformat(), label_en, label_gu))
     
     forecast_list = []
     
@@ -331,51 +340,7 @@ async def market_page(request: Request, db: Session = Depends(get_db)):
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/login", status_code=302)
 
-    # 1. Build Weather Database for all 33 Districts dynamically
-    weather_forecasts = {}
-    for d in DISTRICTS:
-        weather_forecasts[d["id"]] = generate_weather_for_district(d["id"], d["en"], d["gu"])
-
-    # 2. Build exactly 224 unique APMC Markets across the past 30 days
-    mandi_prices_list = []
-    import datetime
-    today_dt = datetime.date(2026, 5, 24)
-    target_dates = [(today_dt - datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(30)]
-    
-    for dist_id, towns in DISTRICT_TOWNS.items():
-        for town_en, town_gu in towns:
-            apmc_en = f"{town_en} APMC"
-            apmc_gu = f"{town_gu} APMC"
-            
-            crops = get_crops_for_apmc(town_en)
-            for crop in crops:
-                # Local crop translations
-                crop_gu_map = {
-                    "Cotton": "કપાસ", "Groundnut": "મગફળી", "Wheat": "ઘઉં", "Onion": "ડુંગળી",
-                    "Potato": "બટાકા", "Cumin": "જીરું", "Mustard": "રાઈ", "Fennel": "વરિયાળી",
-                    "Castor": "દિવેલા", "Bajra": "બાજરી", "Maize": "મકાઈ", "Paddy": "ડાંગર"
-                }
-                crop_gu = crop_gu_map.get(crop, crop)
-                
-                for dt in target_dates:
-                    min_pr, max_pr, mod_pr, arr, trd, trd_dir = get_deterministic_price(dt, apmc_en, crop)
-                    mandi_prices_list.append({
-                        "date": dt,
-                        "apmc_en": apmc_en,
-                        "apmc_gu": apmc_gu,
-                        "crop_en": crop,
-                        "crop_gu": crop_gu,
-                        "arrival": arr,
-                        "min_price": min_pr,
-                        "max_price": max_pr,
-                        "modal_price": mod_pr,
-                        "trend": trd,
-                        "trend_dir": trd_dir
-                    })
-
     return templates.TemplateResponse("market.html", {
         "request": request,
-        "current_user": user,
-        "weather_data": weather_forecasts,
-        "mandi_prices": mandi_prices_list
+        "current_user": user
     })

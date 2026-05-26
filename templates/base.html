@@ -4,14 +4,31 @@
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  <!-- PWA support for mobile -->
+  <meta name="theme-color" content="#2e7d32" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
   <title>{% block title %}AgriSmart — AI Crop Disease Detection{% endblock %}</title>
   <meta name="description" content="{% block desc %}Detect crop diseases instantly using AI. Get treatment plans, growth tips, and expert agricultural advice powered by Google Gemini.{% endblock %}" />
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="/static/css/style.css" as="style" />
+  
+  <!-- DNS prefetch for external APIs -->
+  <link rel="dns-prefetch" href="//api.openweathermap.org" />
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="//generativelanguage.googleapis.com" />
+
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>" />
+  
   <!-- Bilingual Support Library -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="/static/js/translations.js"></script>
-  <script src="/static/js/language.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="/static/js/translations.js" defer></script>
+  <script src="/static/js/language.js" defer></script>
 </head>
 <body>
 

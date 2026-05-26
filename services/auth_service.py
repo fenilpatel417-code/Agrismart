@@ -116,13 +116,14 @@ def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
 # ─── Cookie Helper ───────────────────────────────────────────────────────────
 def set_auth_cookie(response, token: str):
     """Attach the JWT as an HTTP-only cookie to a response."""
+    is_production = bool(os.getenv("DATABASE_URL"))
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
         httponly=True,          # Not accessible by JavaScript — prevents XSS
         max_age=60 * 60 * 24 * EXPIRE_DAYS,
         samesite="lax",
-        secure=False,           # Set True in production with HTTPS
+        secure=is_production,   # True in production (HTTPS), False for local dev (HTTP)
     )
 
 
