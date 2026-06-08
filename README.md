@@ -154,13 +154,13 @@ The `Procfile` is already configured:
 web: uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
----
+----
 
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
----
+----
 
 ## 🙏 Acknowledgements
 
