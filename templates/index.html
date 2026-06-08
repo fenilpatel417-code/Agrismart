@@ -4,25 +4,26 @@
 {% block content %}
 <!-- Hero -->
 <section class="hero">
-  <div>
-    <div class="hero-badge" data-i18n="hero_badge">🤖 Powered by Google Gemini AI</div>
-    <h1 data-i18n="hero_title">Smart Farming with AI</h1>
-    <p data-i18n="hero_subtitle">Upload a photo of your crop and get instant disease diagnosis, treatment plans, growth tips, and expert agricultural advice — completely free.</p>
+  <!-- Hero Content (left) -->
+  <div class="hero-content">
+    <div class="hero-badge" data-i18n="hero_badge">🤖 Powered by Google Gemini 2.5 Flash</div>
+    <h1 data-i18n="hero_title">Smart Farming<br><span class="gradient-text">with AI</span></h1>
+    <p class="hero-subtitle" data-i18n="hero_subtitle">Upload a photo of your crop and get instant disease diagnosis, treatment plans, growth tips, and expert agricultural advice — completely free.</p>
     <div class="hero-btns">
-      <a href="/detect" class="btn btn-primary" data-i18n="hero_button">Detect Disease Now</a>
-      <a href="/chatbot" class="btn btn-secondary" data-i18n="hero_button_bot">Ask AgriBot</a>
+      <a href="/detect" class="btn btn-primary">🔍 <span data-i18n="hero_button">Detect Disease Now</span></a>
+      <a href="/chatbot" class="btn btn-secondary">💬 <span data-i18n="hero_button_bot">Ask AgriBot</span></a>
     </div>
     <div class="stats-bar">
-      <div class="stat"><div class="stat-num">38+</div><div class="stat-label" data-i18n="stat_diseases">Disease Types Detected</div></div>
+      <div class="stat"><div class="stat-num">38+</div><div class="stat-label" data-i18n="stat_diseases">Disease Types</div></div>
       <div class="stat"><div class="stat-num">5</div><div class="stat-label" data-i18n="stat_modes">Analysis Modes</div></div>
       <div class="stat"><div class="stat-num">100%</div><div class="stat-label" data-i18n="stat_free">Free Forever</div></div>
-      <div class="stat"><div class="stat-num">AI</div><div class="stat-label" data-i18n="stat_ai">Powered by Gemini</div></div>
+      <div class="stat"><div class="stat-num">2</div><div class="stat-label">Languages</div></div>
     </div>
   </div>
 </section>
 
 <!-- Features -->
-<section class="section">
+<section class="section" id="features">
   <div class="container">
     <div class="text-center" style="margin-bottom:3rem">
       <span class="section-label" data-i18n="offer_label">What We Offer</span>
@@ -30,35 +31,41 @@
       <p class="section-sub" data-i18n="offer_subtitle">From disease detection to growth optimization — one platform for all your agricultural needs.</p>
     </div>
     <div class="grid-3">
-      <div class="card">
+      <div class="card" data-tilt data-tilt-max="8" data-aos="fade-up" data-aos-delay="100">
         <div class="feature-icon">🔬</div>
         <div class="feature-title" data-i18n="feat_detect_title">Disease Detection</div>
         <div class="feature-desc" data-i18n="feat_detect_desc">Upload any crop photo and instantly identify diseases with severity levels, root causes, and treatment recommendations.</div>
+        <div class="feature-arrow">→</div>
       </div>
-      <div class="card">
+      <div class="card" data-tilt data-tilt-max="8" data-aos="fade-up" data-aos-delay="150">
         <div class="feature-icon">🌿</div>
         <div class="feature-title" data-i18n="feat_ident_title">Crop Identification</div>
         <div class="feature-desc" data-i18n="feat_ident_desc">Don't know what plant you're looking at? Our AI identifies crops and plants from photos with detailed information.</div>
+        <div class="feature-arrow">→</div>
       </div>
-      <div class="card">
+      <div class="card" data-tilt data-tilt-max="8" data-aos="fade-up" data-aos-delay="200">
         <div class="feature-icon">📈</div>
         <div class="feature-title" data-i18n="feat_growth_title">Growth Optimization</div>
         <div class="feature-desc" data-i18n="feat_growth_desc">Get personalized tips to grow your crops faster — soil type, watering schedule, sunlight requirements and more.</div>
+        <div class="feature-arrow">→</div>
       </div>
-      <div class="card">
+      <div class="card" data-tilt data-tilt-max="8" data-aos="fade-up" data-aos-delay="100">
         <div class="feature-icon">💊</div>
         <div class="feature-title" data-i18n="feat_treat_title">Treatment Plans</div>
         <div class="feature-desc" data-i18n="feat_treat_desc">Step-by-step treatment guides with both chemical and organic options. Know exactly what to do and when.</div>
+        <div class="feature-arrow">→</div>
       </div>
-      <div class="card">
+      <div class="card" data-tilt data-tilt-max="8" data-aos="fade-up" data-aos-delay="150">
         <div class="feature-icon">🧪</div>
         <div class="feature-title" data-i18n="feat_fert_title">Fertilizer Guide</div>
         <div class="feature-desc" data-i18n="feat_fert_desc">Get NPK recommendations and fertilizer schedules tailored specifically for your crop and growth stage.</div>
+        <div class="feature-arrow">→</div>
       </div>
-      <div class="card">
+      <div class="card" data-tilt data-tilt-max="8" data-aos="fade-up" data-aos-delay="200">
         <div class="feature-icon">🤖</div>
         <div class="feature-title" data-i18n="feat_chat_title">AI Chatbot</div>
         <div class="feature-desc" data-i18n="feat_chat_desc">Ask AgriBot anything about farming — available 24/7 to answer all your crop and plant-related questions.</div>
+        <div class="feature-arrow">→</div>
       </div>
     </div>
   </div>
@@ -87,8 +94,8 @@
           </div>
         </div>
       </div>
-      <div style="text-align:center">
-        <div style="background:var(--glass); border:1px solid var(--border); border-radius:24px; padding:2rem; font-size:8rem; line-height:1;">🌾</div>
+      <div style="text-align:center" data-aos="fade-left">
+        <div data-tilt data-tilt-max="10" style="display:inline-block; background:var(--glass); border:1px solid var(--border); border-radius:28px; padding:2.5rem; font-size:8rem; line-height:1; backdrop-filter:blur(16px); box-shadow:var(--glass-shadow);">🌾</div>
         <div style="margin-top:1.5rem; display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap">
           <span class="badge badge-green" data-i18n="demo_detected">✓ Tomato Blight Detected</span>
           <span class="badge badge-blue" data-i18n="demo_confidence">95% Confidence</span>
@@ -108,11 +115,11 @@
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center">
       {% for crop in [('🍅','Tomato'),('🥔','Potato'),('🌾','Wheat'),('🧅','Onion'),('☁️','Cotton'),('🥜','Groundnut'),('🧄','Garlic'),('🌱','Cumin'),('🌿','Fennel'),('🍃','Castor'),('🌽','Bajra'),('🌾','Jowar'),('🫛','Soybean'),('🎋','Sugarcane'),('🥭','Mango'),('🍌','Banana'),('🍎','Pomegranate'),('🌱','Sesame'),('🍂','Tobacco'),('🌾','Rice')] %}
-      <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:12px; padding:1rem 1.5rem; text-align:center; font-size:0.9rem; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor:pointer; width: 120px;"
+      <div class="crop-card" style="background:var(--glass); border:1px solid var(--glass-border); border-radius:12px; padding:1.2rem 1rem; text-align:center; font-size:0.9rem; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor:pointer; width: 120px;"
            onclick="showCropInfo('{{ crop[1] }}')"
            onmouseover="this.style.borderColor='var(--accent)'; this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,212,170,0.15)';" 
            onmouseout="this.style.borderColor='var(--glass-border)'; this.style.transform='none'; this.style.boxShadow='none';">
-        <div style="font-size:2rem; margin-bottom:8px">{{ crop[0] }}</div>
+        <img src="/static/images/crops/{{ crop[1]|lower }}.png" alt="{{ crop[1] }}" class="crop-img-3d" width="48" height="48" style="width: 48px; height: 48px; object-fit: contain; margin: 0 auto 8px; display: block;" />
         <span data-i18n="crop_{{ crop[1]|lower }}">{{ crop[1] }}</span>
       </div>
       {% endfor %}
@@ -785,6 +792,7 @@
   };
 
   function showCropInfo(name) {
+    window.activeCropName = name;
     const crop = cropData[name];
     if (!crop) return;
     
@@ -794,7 +802,9 @@
     
     const contentHtml = `
       <div class="crop-info-header" style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem;">
-        <div style="font-size:3.5rem; background:rgba(255,255,255,0.03); border-radius:16px; padding:0.6rem 0.8rem; border:1px solid var(--glass-border); line-height:1; display:flex; align-items:center; justify-content:center;">${crop.emoji}</div>
+        <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:0.5rem; border:1px solid var(--glass-border); display:flex; align-items:center; justify-content:center; width: 70px; height: 70px; flex-shrink: 0;">
+          <img src="/static/images/crops/${name.toLowerCase()}.png" alt="${details.name}" style="width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,212,170,0.3));" />
+        </div>
         <div>
           <h2 style="font-family:'Poppins',sans-serif; font-weight:700; color:var(--text-primary); font-size:2rem; margin-bottom:0.2rem; line-height:1.2;">${details.name}</h2>
           <p style="font-style:italic; color:var(--accent); font-size:1.05rem; margin-bottom:0.35rem; font-weight:500;">${crop.scientific}</p>
@@ -850,6 +860,7 @@
   }
 
   function closeCropModal() {
+    window.activeCropName = null;
     document.getElementById('cropModal').classList.remove('open');
     document.body.style.overflow = ''; // Restore background scroll
   }
@@ -863,6 +874,13 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       closeCropModal();
+    }
+  });
+
+  // Automatically update modal translation when language changes
+  window.addEventListener('languageChanged', () => {
+    if (window.activeCropName) {
+      showCropInfo(window.activeCropName);
     }
   });
 </script>

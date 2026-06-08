@@ -7,10 +7,21 @@ import asyncio
 import hashlib
 import time
 from dotenv import load_dotenv
+import itertools
 
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+API_KEYS = [
+    os.getenv("GEMINI_API_KEY"),
+    os.getenv("GEMINI_API_KEY_2"),
+    os.getenv("GEMINI_API_KEY_3"),
+]
 
+# Filter out None values
+API_KEYS = [k for k in API_KEYS if k]
+key_cycle = itertools.cycle(API_KEYS)
+
+def get_next_key():
+    return next(key_cycle)
 # ─── Simple In-Memory Crop Analysis Cache ─────────────────────────────────────
 _cache = {}
 CACHE_DURATION = 86400  # 24 hours in seconds
@@ -270,7 +281,8 @@ Questions:
 
 
 def _analyze_sync(image_bytes: bytes, analysis_type: str, language: str = "en") -> dict:
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "your_gemini_api_key_here":
+    active_key = get_next_key()
+    if not active_key or active_key == "your_gemini_api_key_here":
         return {
             "success": False,
             "error": "⚙️ Gemini API key not configured. Please add your free API key to the .env file. Get one at https://aistudio.google.com"
@@ -286,21 +298,25 @@ def _analyze_sync(image_bytes: bytes, analysis_type: str, language: str = "en") 
     print(f"[CACHE MISS] Fetching fresh crop analysis from Gemini for type: {analysis_type}, lang: {language}")
     
     try:
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = genai.Client(api_key=active_key)
         image = PIL.Image.open(io.BytesIO(image_bytes))
         
-        # ── Q1 & Q2 Image Quality Pre-check ──
-        precheck = _precheck_image(client, image)
-        if not precheck["success"]:
-            return {
-                "success": False,
-                "error": precheck["error"]
-            }
+        # ── Q1 & Q2 Image Quality Pre-check (Bypassed to reduce analyzing time by 50%) ──
+        # precheck = _precheck_image(client, image)
+        # if not precheck["success"]:
+        #     return {
+        #         "success": False,
+        #         "error": precheck["error"]
+        #     }
 
         prompt = PROMPTS.get(analysis_type, PROMPTS["disease"])
 
         # ── Language Specific Instructions ──
         if language == "gu":
+            # Strong prefix to force Gemini model to generate entirely in Gujarati script
+            guj_prefix = "[SYSTEM INSTRUCTION: RESPOND ENTIRELY IN GUJARATI. All descriptions, bullet points, diagnostics, treatment plans, chemical or organic steps, and guides MUST be written in the Gujarati script. Keep only the exact English uppercase field headers (e.g. 🌿 PLANT IDENTIFIED:, 🦠 DISEASE STATUS:, etc.) as they are. Translate everything else.]\n\n"
+            prompt = guj_prefix + prompt
+            
             lang_instruction = """
 CRITICAL LANGUAGE INSTRUCTION (IMPORTANT):
 1. You MUST respond completely in the Gujarati language (ગુજરાતી) for all descriptive texts, symptoms, root causes, chemical/organic treatment details, prevention tips, growth recommendations, disclaimers, economic values, and warnings.
@@ -319,7 +335,7 @@ CRITICAL LANGUAGE INSTRUCTION (IMPORTANT):
         response = client.models.generate_content(
             model="models/gemini-2.5-flash",
             contents=[prompt, image],
-            config=types.GenerateContentConfig(max_output_tokens=600)
+            config=types.GenerateContentConfig(max_output_tokens=2048)
         )
         result_text = response.text
 
@@ -386,10 +402,11 @@ async def analyze_image(image_bytes: bytes, analysis_type: str, language: str = 
 
 
 def _chat_sync(message: str, history: list, language: str = "en") -> str:
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "your_gemini_api_key_here":
+    active_key = get_next_key()
+    if not active_key or active_key == "your_gemini_api_key_here":
         return "⚙️ AgriBot needs a Gemini API key to work. Please add it to your .env file. Get a free key at https://aistudio.google.com"
     try:
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = genai.Client(api_key=active_key)
 
         chat_history = []
         for msg in history[-10:]:
@@ -404,7 +421,7 @@ def _chat_sync(message: str, history: list, language: str = "en") -> str:
             model="models/gemini-2.5-flash",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                max_output_tokens=400
+                max_output_tokens=1024
             ),
             history=chat_history
         )

@@ -35,16 +35,7 @@ const LanguageManager = {
       }
     });
 
-    // Update toggle button text
-    const btn = document.getElementById('lang-toggle-btn');
-    if (btn) {
-      const span = btn.querySelector('span');
-      if (span) {
-        span.textContent = t['language_toggle'];
-      } else {
-        btn.textContent = t['language_toggle'];
-      }
-    }
+    // 3D Language Toggle Button text is automatically updated by the data-i18n loop above.
 
     // Update html lang attribute
     document.documentElement.lang = lang === 'gu' ? 'gu' : 'en';
@@ -55,6 +46,9 @@ const LanguageManager = {
     } else {
       document.body.style.fontFamily = "";
     }
+    
+    // Notify any dynamic page elements that language has updated
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
   },
 
   // Initialize on page load
